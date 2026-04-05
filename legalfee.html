@@ -629,7 +629,7 @@
                 // 离婚案件
                 if (!divorceHasSplit) {
                     // 不涉及财产分割，每件交纳 50-300 元
-                    document.getElementById('feeResult').textContent = '50-300 元';
+                    document.getElementById('feeResult').textContent = '约 200 元';
                     document.getElementById('feeDetail').textContent = '不涉及财产分割';
 
                     // 隐藏保全费行
@@ -638,10 +638,17 @@
                 } else {
                     const amount = parseFloat(document.getElementById('divorceAmount').value) || 0;
                     fee = calculateDivorceFee(amount);
-                    if (amount > 20) {
-                        detail = `财产总额：${amount}万元（含财产分割）`;
+
+                    // 不超过 20 万元，不另行交纳，显示约 200 元
+                    if (amount <= 20) {
+                        document.getElementById('feeResult').textContent = '约 200 元';
+                        document.getElementById('feeDetail').textContent = `财产总额：${amount}万元（未超 20 万）`;
+
+                        // 隐藏保全费行
+                        document.getElementById('preservationFeeRow').classList.add('hidden');
+                        return;
                     } else {
-                        detail = `财产总额：${amount}万元（未超 20 万）`;
+                        detail = `财产总额：${amount}万元（含财产分割）`;
                     }
 
                     // 计算财产保全费（使用财产总额）
