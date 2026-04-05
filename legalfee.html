@@ -334,7 +334,7 @@
                         <span class="desc">按标的额分段累计</span>
                     </button>
                     <button class="option-btn type-btn" onclick="selectType('divorce', this)">
-                        <span class="icon">💑</span>
+                        <span class="icon">💔</span>
                         <span>离婚案件</span>
                         <span class="desc">基础费 + 财产分割</span>
                     </button>
@@ -366,13 +366,6 @@
             <!-- 离婚案件输入 -->
             <div id="divorceCaseInput" class="hidden">
                 <div class="form-section">
-                    <div class="section-label">财产总额</div>
-                    <div class="input-wrapper">
-                        <input type="number" class="input-field" id="divorceAmount" placeholder="0" min="0" step="0.01" oninput="calculateFee()">
-                        <span class="input-suffix">万元</span>
-                    </div>
-                </div>
-                <div class="form-section">
                     <div class="section-label">是否涉及财产分割</div>
                     <div class="options-grid grid-2">
                         <button class="option-btn" id="splitYes" onclick="setSplit(true, this)">
@@ -383,15 +376,25 @@
                         </button>
                     </div>
                 </div>
-                <div class="form-section">
-                    <div class="section-label">是否需要财产保全</div>
-                    <div class="options-grid grid-2">
-                        <button class="option-btn" id="divorcePreservationYes" onclick="setDivorcePreservation(true, this)">
-                            <span>需要</span>
-                        </button>
-                        <button class="option-btn active" id="divorcePreservationNo" onclick="setDivorcePreservation(false, this)">
-                            <span>不需要</span>
-                        </button>
+                <!-- 涉及财产分割时才显示 -->
+                <div id="divorceSplitContent" class="hidden">
+                    <div class="form-section">
+                        <div class="section-label">财产总额</div>
+                        <div class="input-wrapper">
+                            <input type="number" class="input-field" id="divorceAmount" placeholder="0" min="0" step="0.01" oninput="calculateFee()">
+                            <span class="input-suffix">万元</span>
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <div class="section-label">是否需要财产保全</div>
+                        <div class="options-grid grid-2">
+                            <button class="option-btn" id="divorcePreservationYes" onclick="setDivorcePreservation(true, this)">
+                                <span>需要</span>
+                            </button>
+                            <button class="option-btn active" id="divorcePreservationNo" onclick="setDivorcePreservation(false, this)">
+                                <span>不需要</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -406,7 +409,7 @@
                     <div class="preservation-fee-row hidden" id="preservationFeeRow" style="margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(30, 64, 175, 0.1);">
                         <div class="result-label" style="margin-bottom: 6px;">🔒 财产保全费</div>
                         <div class="result-value" id="preservationFeeResult" style="font-size: 28px;">--</div>
-                        <div class="result-range" id="preservationFeeDetail" style="margin-top: 8px; padding-top: 8px; border-top: none;">--</div>
+                        <div class="result-range" id="preservationFeeDetail" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(30, 64, 175, 0.1);">--</div>
                     </div>
                 </div>
             </div>
@@ -465,7 +468,7 @@
 
     <script>
         let currentType = 'property';
-        let divorceHasSplit = false;
+        let divorceHasSplit = false;  // 默认不涉及财产分割
         let needPreservation = false;
         let divorceNeedPreservation = false;
 
@@ -486,6 +489,14 @@
             } else {
                 propertyInput.classList.add('hidden');
                 divorceInput.classList.remove('hidden');
+                // 重置离婚案件状态
+                divorceHasSplit = false;
+                divorceNeedPreservation = false;
+                document.getElementById('splitNo').classList.add('active');
+                document.getElementById('splitYes').classList.remove('active');
+                document.getElementById('divorcePreservationNo').classList.add('active');
+                document.getElementById('divorcePreservationYes').classList.remove('active');
+                document.getElementById('divorceSplitContent').classList.add('hidden');
                 calculateFee();
             }
         }
@@ -511,6 +522,18 @@
             divorceHasSplit = hasSplit;
             document.getElementById('splitNo').classList.toggle('active', !hasSplit);
             document.getElementById('splitYes').classList.toggle('active', hasSplit);
+
+            // 根据是否涉及财产分割显示/隐藏内容
+            const splitContent = document.getElementById('divorceSplitContent');
+            if (hasSplit) {
+                splitContent.classList.remove('hidden');
+            } else {
+                splitContent.classList.add('hidden');
+                // 重置保全状态
+                divorceNeedPreservation = false;
+                document.getElementById('divorcePreservationNo').classList.add('active');
+                document.getElementById('divorcePreservationYes').classList.remove('active');
+            }
             calculateFee();
         }
 
@@ -604,19 +627,24 @@
 
             } else {
                 // 离婚案件
-                const amount = parseFloat(document.getElementById('divorceAmount').value) || 0;
-
-                fee = calculateDivorceFee(amount);
-                if (divorceHasSplit && amount > 20) {
-                    detail = `财产总额：${amount}万元（含财产分割）`;
+                if (!divorceHasSplit) {
+                    // 不涉及财产分割，固定 200 元
+                    fee = 200;
+                    detail = '不涉及财产分割';
                 } else {
-                    detail = `财产总额：${amount}万元`;
-                }
+                    const amount = parseFloat(document.getElementById('divorceAmount').value) || 0;
+                    fee = calculateDivorceFee(amount);
+                    if (amount > 20) {
+                        detail = `财产总额：${amount}万元（含财产分割）`;
+                    } else {
+                        detail = `财产总额：${amount}万元（未超 20 万）`;
+                    }
 
-                // 计算财产保全费（使用财产总额）
-                if (divorceNeedPreservation && amount > 0) {
-                    preservationFee = calculatePreservationFee(amount);
-                    preservationDetail = `保全财产：${amount}万元`;
+                    // 计算财产保全费（使用财产总额）
+                    if (divorceNeedPreservation && amount > 0) {
+                        preservationFee = calculatePreservationFee(amount);
+                        preservationDetail = `保全财产：${amount}万元`;
+                    }
                 }
             }
 
