@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>天数计算器</title>
+    <style>
+        :root {
+            --bg-primary: #FAFAFA;
+            --bg-secondary: #F5F5F5;
+            --text-primary: #1A1A1A;
+            --text-secondary: #6B6B6B;
+            --text-tertiary: #9B9B9B;
+            --accent: #1E40AF;
+            --accent-hover: #1E3A8A;
+            --accent-light: rgba(30, 64, 175, 0.08);
+            --accent-gradient: linear-gradient(135deg, #1E40AF 0%, #3B5998 100%);
+            --border: #E5E5E5;
+            --focus-ring: rgba(30, 64, 175, 0.2);
+
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --radius-sm: 12px;
+
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 12px 48px rgba(0, 0, 0, 0.12);
+            --shadow-button: 0 4px 0 #1E3A8A;
+            --shadow-button-active: 0 2px 0 #1E3A8A;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(180deg, #EBF4FF 0%, #FAFAFA 50%, #F0F4F8 100%);
+            min-height: 100vh;
+            padding: 32px 16px;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background-image:
+                radial-gradient(circle at 20% 30%, rgba(30, 64, 175, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(59, 89, 152, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(30, 64, 175, 0.03) 0%, transparent 40%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 28px;
+            position: relative;
+        }
+
+        .header-icon {
+            font-size: 44px;
+            margin-bottom: 12px;
+            display: block;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+
+        .header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .header p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-lg);
+            padding: 28px 24px;
+            border: 1px solid rgba(229, 229, 229, 0.5);
+            box-shadow: var(--shadow);
+        }
+
+        .form-section {
+            margin-bottom: 28px;
+            padding-bottom: 28px;
+            border-bottom: 1px solid rgba(229, 229, 229, 0.6);
+        }
+
+        .form-section:last-of-type {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .section-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-label::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: var(--accent-gradient);
+            border-radius: 2px;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .options-grid.grid-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .option-btn {
+            padding: 18px 14px;
+            background: linear-gradient(145deg, #FFFFFF 0%, #F5F5F5 100%);
+            border: 1px solid #E0E0E0;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.12s ease;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            position: relative;
+            box-shadow: 0 4px 0 #D0D0D0;
+        }
+
+        .option-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #D0D0D0;
+        }
+
+        .option-btn.active {
+            border-color: var(--accent);
+            background: var(--accent-light);
+            color: var(--accent);
+            box-shadow: 0 4px 0 rgba(30, 64, 175, 0.3);
+        }
+
+        .option-btn.active:active {
+            box-shadow: 0 2px 0 rgba(30, 64, 175, 0.3);
+        }
+
+        .option-btn .icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .option-btn .desc {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+            font-weight: 400;
+        }
+
+        .option-btn.active .desc {
+            color: var(--accent);
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 18px 18px;
+            font-size: 20px;
+            font-weight: 600;
+            border: 2px solid #E0E0E0;
+            border-radius: var(--radius-md);
+            outline: none;
+            transition: all 0.2s ease;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .input-field:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px var(--focus-ring), 0 2px 12px rgba(30, 64, 175, 0.1);
+        }
+
+        .input-field::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .input-suffix {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 15px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .result-section {
+            margin-top: 28px;
+            padding-top: 20px;
+            display: none;
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .result-section.show {
+            display: block;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+            border-radius: var(--radius-md);
+            padding: 18px 20px;
+            text-align: center;
+            border: 1px solid rgba(30, 64, 175, 0.15);
+            box-shadow: 0 4px 16px rgba(30, 64, 175, 0.08);
+        }
+
+        .result-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .result-value {
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: -1px;
+            line-height: 1.2;
+        }
+
+        .result-range {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(30, 64, 175, 0.1);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(26, 26, 26, 0.95);
+            color: white;
+            padding: 14px 24px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 16px 12px; }
+            .card { padding: 20px 16px; }
+            .header h1 { font-size: 22px; }
+            .header-icon { font-size: 36px; }
+            .result-value { font-size: 32px; }
+            .options-grid.grid-2 { gap: 8px; }
+            .option-btn { padding: 14px 10px; font-size: 14px; }
+            .option-btn .icon { font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <span class="header-icon">📅</span>
+            <h1>天数计算器</h1>
+            <p>日期间隔 · 日期推算</p>
+        </div>
+
+        <!-- 主卡片 -->
+        <div class="card">
+            <!-- 计算模式 -->
+            <div class="form-section">
+                <div class="section-label">计算模式</div>
+                <div class="options-grid grid-2">
+                    <button class="option-btn mode-btn active" onclick="selectMode('interval', this)">
+                        <span class="icon">📏</span>
+                        <span>间隔天数</span>
+                        <span class="desc">计算两个日期的间隔</span>
+                    </button>
+                    <button class="option-btn mode-btn" onclick="selectMode('calculate', this)">
+                        <span class="icon">🔢</span>
+                        <span>日期推算</span>
+                        <span class="desc">从某天加减若干天</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 间隔天数模式 -->
+            <div id="intervalMode">
+                <div class="form-section">
+                    <div class="section-label">开始日期</div>
+                    <div class="input-wrapper">
+                        <input type="date" class="input-field" id="intervalStartDate" onchange="calculateInterval()">
+                    </div>
+                </div>
+                <div class="form-section">
+                    <div class="section-label">结束日期</div>
+                    <div class="input-wrapper">
+                        <input type="date" class="input-field" id="intervalEndDate" onchange="calculateInterval()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 日期推算模式 -->
+            <div id="calculateMode" class="hidden">
+                <div class="form-section">
+                    <div class="section-label">起始日期</div>
+                    <div class="input-wrapper">
+                        <input type="date" class="input-field" id="calcStartDate" onchange="calculateDate()">
+                    </div>
+                </div>
+                <div class="form-section">
+                    <div class="section-label">加减天数</div>
+                    <div class="input-wrapper">
+                        <input type="number" class="input-field" id="calcDays" placeholder="输入天数，负数表示减去" min="-9999" max="9999" oninput="calculateDate()">
+                        <span class="input-suffix">天</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 结果区域 -->
+            <div class="result-section show" id="resultSection">
+                <div class="result-card">
+                    <div class="result-label" id="resultLabel">📅 间隔天数</div>
+                    <div class="result-value" id="resultValue">--</div>
+                    <div class="result-range" id="resultDetail">--</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提示框 -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        let currentMode = 'interval';
+
+        // 选择模式
+        function selectMode(mode, btn) {
+            currentMode = mode;
+
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const intervalMode = document.getElementById('intervalMode');
+            const calculateMode = document.getElementById('calculateMode');
+            const resultLabel = document.getElementById('resultLabel');
+
+            if (mode === 'interval') {
+                intervalMode.classList.remove('hidden');
+                calculateMode.classList.add('hidden');
+                resultLabel.textContent = '📅 间隔天数';
+                calculateInterval();
+            } else {
+                intervalMode.classList.add('hidden');
+                calculateMode.classList.remove('hidden');
+                resultLabel.textContent = '📅 推算结果';
+                calculateDate();
+            }
+        }
+
+        // 计算间隔天数
+        function calculateInterval() {
+            const startDate = document.getElementById('intervalStartDate').value;
+            const endDate = document.getElementById('intervalEndDate').value;
+
+            if (!startDate || !endDate) {
+                document.getElementById('resultValue').textContent = '--';
+                document.getElementById('resultDetail').textContent = '--';
+                return;
+            }
+
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const diffTime = end - start;
+            const diffDays = Math.floor(Math.abs(diffTime) / (1000 * 60 * 60 * 24));
+
+            const isNegative = diffTime < 0;
+            const direction = isNegative ? '（结束早于开始）' : '';
+
+            document.getElementById('resultValue').textContent = diffDays + '天';
+            document.getElementById('resultDetail').textContent = `${startDate} → ${endDate}${direction}`;
+        }
+
+        // 计算日期推算
+        function calculateDate() {
+            const startDate = document.getElementById('calcStartDate').value;
+            const days = parseInt(document.getElementById('calcDays').value) || 0;
+
+            if (!startDate) {
+                document.getElementById('resultValue').textContent = '--';
+                document.getElementById('resultDetail').textContent = '--';
+                return;
+            }
+
+            const start = new Date(startDate);
+            start.setDate(start.getDate() + days);
+
+            const year = start.getFullYear();
+            const month = String(start.getMonth() + 1).padStart(2, '0');
+            const day = String(start.getDate()).padStart(2, '0');
+
+            const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            const weekday = weekdays[start.getDay()];
+
+            const sign = days >= 0 ? '+' : '-';
+            const absDays = Math.abs(days);
+
+            document.getElementById('resultValue').textContent = `${year}-${month}-${day} ${weekday}`;
+            document.getElementById('resultDetail').textContent = `从 ${startDate} ${sign}${absDays}天`;
+        }
+
+        // 显示提示
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+    </script>
+</body>
+</html>
