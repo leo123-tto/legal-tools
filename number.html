@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>数字大写转换器</title>
+    <style>
+        :root {
+            --bg-primary: #FAFAFA;
+            --bg-secondary: #F5F5F5;
+            --text-primary: #1A1A1A;
+            --text-secondary: #6B6B6B;
+            --text-tertiary: #9B9B9B;
+            --accent: #1E40AF;
+            --accent-hover: #1E3A8A;
+            --accent-light: rgba(30, 64, 175, 0.08);
+            --accent-gradient: linear-gradient(135deg, #1E40AF 0%, #3B5998 100%);
+            --border: #E5E5E5;
+            --focus-ring: rgba(30, 64, 175, 0.2);
+
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --radius-sm: 12px;
+
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 12px 48px rgba(0, 0, 0, 0.12);
+            --shadow-button: 0 4px 0 #1E3A8A;
+            --shadow-button-active: 0 2px 0 #1E3A8A;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(180deg, #EBF4FF 0%, #FAFAFA 50%, #F0F4F8 100%);
+            min-height: 100vh;
+            padding: 32px 16px;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background-image:
+                radial-gradient(circle at 20% 30%, rgba(30, 64, 175, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(59, 89, 152, 0.04) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(30, 64, 175, 0.03) 0%, transparent 40%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 28px;
+            position: relative;
+        }
+
+        .back-link {
+            position: absolute;
+            top: -10px;
+            left: 0;
+            font-size: 13px;
+            color: var(--accent);
+            text-decoration: none;
+            padding: 8px 12px;
+            background: rgba(30, 64, 175, 0.08);
+            border-radius: 20px;
+            transition: all 0.2s ease;
+            display: inline-block;
+            z-index: 10;
+        }
+
+        .back-link:hover {
+            background: rgba(30, 64, 175, 0.15);
+            transform: translateX(-2px);
+        }
+
+        .back-link:active {
+            transform: translateX(0);
+            background: rgba(30, 64, 175, 0.2);
+        }
+
+        .header-icon {
+            font-size: 44px;
+            margin-bottom: 12px;
+            display: block;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+
+        .header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .header p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-lg);
+            padding: 28px 24px;
+            border: 1px solid rgba(229, 229, 229, 0.5);
+            box-shadow: var(--shadow);
+        }
+
+        .form-section {
+            margin-bottom: 28px;
+            padding-bottom: 28px;
+            border-bottom: 1px solid rgba(229, 229, 229, 0.6);
+        }
+
+        .form-section:last-of-type {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .section-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-label::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: var(--accent-gradient);
+            border-radius: 2px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 18px 18px;
+            padding-right: 70px;
+            font-size: 24px;
+            font-weight: 600;
+            border: 2px solid #E0E0E0;
+            border-radius: var(--radius-md);
+            outline: none;
+            transition: all 0.2s ease;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            -moz-appearance: textfield;
+        }
+
+        .input-field::-webkit-outer-spin-button,
+        .input-field::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .input-field:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px var(--focus-ring), 0 2px 12px rgba(30, 64, 175, 0.1);
+        }
+
+        .input-field::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .input-suffix {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 15px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .result-section {
+            margin-top: 28px;
+            padding-top: 20px;
+            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+            border-radius: var(--radius-md);
+            padding: 18px 20px;
+            text-align: center;
+            border: 1px solid rgba(30, 64, 175, 0.15);
+            box-shadow: 0 4px 16px rgba(30, 64, 175, 0.08);
+        }
+
+        .result-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .result-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: -1px;
+            line-height: 1.4;
+        }
+
+        .result-hint {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(30, 64, 175, 0.1);
+        }
+
+        .copy-button {
+            margin-top: 16px;
+            padding: 12px 24px;
+            background: var(--accent-gradient);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 0 #1E3A8A;
+            display: inline-block;
+        }
+
+        .copy-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #1E3A8A;
+        }
+
+        .copy-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 0 #1E3A8A;
+        }
+
+        .copy-button.copied {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            box-shadow: 0 4px 0 #047857;
+        }
+
+        /* 大小写对照表 */
+        .reference-table {
+            margin-top: 28px;
+            padding-top: 24px;
+            border-top: 2px solid var(--border);
+        }
+
+        .reference-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .reference-item {
+            background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+            border-radius: var(--radius-sm);
+            padding: 6px 4px;
+            text-align: center;
+            border: 1px solid rgba(229, 229, 229, 0.6);
+            transition: all 0.2s ease;
+        }
+
+        .reference-item:hover {
+            background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+            border-color: rgba(30, 64, 175, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30, 64, 175, 0.1);
+        }
+
+        .reference-digit {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .reference-uppercase {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--accent);
+            letter-spacing: -0.5px;
+        }
+
+        @media (max-width: 768px) {
+            .reference-grid {
+                grid-template-columns: repeat(6, 1fr);
+                gap: 6px;
+            }
+            .reference-item {
+                padding: 5px 3px;
+            }
+            .reference-digit {
+                font-size: 13px;
+            }
+            .reference-uppercase {
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .reference-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+            .reference-item {
+                padding: 4px 2px;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 16px 12px; }
+            .card { padding: 20px 16px; }
+            .header h1 { font-size: 22px; }
+            .header-icon { font-size: 36px; }
+            .result-value { font-size: 26px; }
+            .input-field { font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <a href="index.html" class="back-link">← 返回主页</a>
+            <span class="header-icon">🔢</span>
+            <h1>数字大写转换器</h1>
+            <p>数字转中文大写 · 实时转换</p>
+        </div>
+
+        <!-- 主卡片 -->
+        <div class="card">
+            <!-- 数字输入 -->
+            <div class="form-section">
+                <div class="section-label">输入数字</div>
+                <div class="input-wrapper">
+                    <input type="text" class="input-field" id="numberInput" placeholder="0" inputmode="decimal" oninput="convertNumber()">
+                    <span class="input-suffix">元</span>
+                </div>
+            </div>
+
+            <!-- 结果区域 -->
+            <div class="result-section" id="resultSection">
+                <div class="result-card">
+                    <div class="result-label">💰 大写金额</div>
+                    <div class="result-value" id="resultValue">--</div>
+                    <div class="result-hint" id="resultHint">--</div>
+                    <button class="copy-button" id="copyBtn" onclick="copyResult()">📋 复制大写金额</button>
+                </div>
+            </div>
+
+            <!-- 大小写对照表 -->
+            <div class="reference-table">
+                <div class="section-label">大小写对照</div>
+                <div class="reference-grid">
+                    <div class="reference-item">
+                        <div class="reference-digit">0</div>
+                        <div class="reference-uppercase">零</div>
+                    </div>
+                    <div class="reference-item">
+                        <div class="reference-digit">1</div>
+                        <div class="reference-uppercase">壹</div>
+                    </div>
+                    <div class="reference-item">
+                        <div class="reference-digit">2</div>
+                        <div class="reference-uppercase">贰</div>
+                    </div>
+                    <div class="reference-item">
+                        <div class="reference-digit">3</div>
+                        <div class="reference-uppercase">叁</div>
+                    </div>
+                    <div class="reference-item">
+                        <div class="reference-digit">4</div>
+                        <div class="reference-uppercase">肆</div>
+                    </div>
+                    <div class="reference-item">
+                        <div class="reference-digit">5</div>
+                        <div class="reference-uppercase">伍</div>
+                    </div>
+                    <div class="reference-item">
+                        <div class="reference-digit">6</div>
+                        <div class="reference-uppercase">陆</div>
+                    </div>
+                    <div class="reference-item">
+                        <div class="reference-digit">7</div>
+                        <div class="reference-uppercase">柒</div>
+                    </div>
+                    <div class="reference-item">
+                        <div class="reference-digit">8</div>
+                        <div class="reference-uppercase">捌</div>
+                    </div>
+                    <div class="reference-item">
+                        <div class="reference-digit">9</div>
+                        <div class="reference-uppercase">玖</div>
+                    </div>
+                    <div class="reference-item">
+                        <div class="reference-digit">十</div>
+                        <div class="reference-uppercase">拾</div>
+                    </div>
+                    <div class="reference-item">
+                        <div class="reference-digit">百</div>
+                        <div class="reference-uppercase">佰</div>
+                    </div>
+                    <div class="reference-item">
+                        <div class="reference-digit">千</div>
+                        <div class="reference-uppercase">仟</div>
+                    </div>
+                    <div class="reference-item">
+                        <div class="reference-digit">万</div>
+                        <div class="reference-uppercase">万</div>
+                    </div>
+                    <div class="reference-item">
+                        <div class="reference-digit">亿</div>
+                        <div class="reference-uppercase">亿</div>
+                    </div>
+                    <div class="reference-item">
+                        <div class="reference-digit">元</div>
+                        <div class="reference-uppercase">圆</div>
+                    </div>
+                    <div class="reference-item">
+                        <div class="reference-digit">角</div>
+                        <div class="reference-uppercase">角</div>
+                    </div>
+                    <div class="reference-item">
+                        <div class="reference-digit">分</div>
+                        <div class="reference-uppercase">分</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部信息 -->
+        <div style="text-align: center; margin-top: 24px; margin-bottom: 24px;">
+            <p style="font-size: 14px; font-weight: 600; color: var(--text-primary);">江苏漫修（无锡）律师事务所 刘成律师</p>
+        </div>
+    </div>
+
+    <script>
+        // 数字大写转换
+        function convertNumber() {
+            let input = document.getElementById('numberInput').value.trim();
+
+            // 防呆设计：只允许数字和小数点，且小数点后最多两位
+            if (!/^\d*\.?\d{0,2}$/.test(input)) {
+                // 移除非法字符
+                input = input.replace(/[^\d.]/g, '').replace(/(\..*?)\..*/g, '$1').replace(/^(\d*\.\d{2}).*$/, '$1');
+                document.getElementById('numberInput').value = input;
+            }
+
+            if (!input || input === '0' || input === '0.00' || input === '.') {
+                document.getElementById('resultValue').textContent = '零元整';
+                document.getElementById('resultHint').textContent = '输入数字后实时转换';
+                return;
+            }
+
+            const num = parseFloat(input);
+
+            if (isNaN(num) || num < 0) {
+                document.getElementById('resultValue').textContent = '请输入有效数字';
+                document.getElementById('resultHint').textContent = '--';
+                return;
+            }
+
+            if (num > 999999999999) {
+                document.getElementById('resultValue').textContent = '数字过大';
+                document.getElementById('resultHint').textContent = '最大支持 9999 亿元';
+                return;
+            }
+
+            const uppercase = numberToChineseUppercase(num);
+            const readout = numberToChineseReadout(num);
+
+            document.getElementById('resultValue').textContent = uppercase;
+            document.getElementById('resultHint').textContent = readout;
+        }
+
+        // 复制大写金额
+        function copyResult() {
+            const result = document.getElementById('resultValue').textContent;
+            if (result && result !== '--') {
+                navigator.clipboard.writeText(result).then(() => {
+                    const btn = document.getElementById('copyBtn');
+                    btn.textContent = '✓ 已复制';
+                    btn.classList.add('copied');
+                    setTimeout(() => {
+                        btn.textContent = '📋 复制大写金额';
+                        btn.classList.remove('copied');
+                    }, 2000);
+                }).catch(err => {
+                    alert('复制失败，请手动复制');
+                });
+            }
+        }
+
+        // 数字转大写金额（财务用）
+        function numberToChineseUppercase(num) {
+            const units = ['', '拾', '佰', '仟'];
+            const bigUnits = ['', '万', '亿', '兆'];
+            const digits = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
+
+            // 处理整数部分
+            let integer = Math.floor(num);
+            let result = '';
+            let unitPos = 0;
+            let needZero = false;
+
+            if (integer === 0) {
+                return '零元整';
+            }
+
+            while (integer > 0) {
+                let section = integer % 10000;
+                let sectionStr = '';
+                let unit = 0;
+
+                if (section === 0) {
+                    needZero = true;
+                } else {
+                    let tempStr = '';
+                    while (section > 0) {
+                        let digit = section % 10;
+                        if (digit === 0) {
+                            if (tempStr !== '') {
+                                tempStr = '零' + tempStr;
+                            }
+                        } else {
+                            tempStr = digits[digit] + units[unit] + tempStr;
+                        }
+                        section = Math.floor(section / 10);
+                        unit++;
+                    }
+                    sectionStr = tempStr + bigUnits[unitPos];
+                    if (needZero && result !== '') {
+                        sectionStr = '零' + sectionStr;
+                    }
+                    needZero = false;
+                }
+
+                if (sectionStr !== '') {
+                    result = sectionStr + result;
+                }
+                integer = Math.floor(integer / 10000);
+                unitPos++;
+            }
+
+            result = result.replace(/零+/, '零').replace(/^零+/, '').replace(/零+$/, '');
+
+            if (result === '') {
+                result = '零';
+            }
+
+            // 处理小数部分
+            let decimal = Math.round((num - Math.floor(num)) * 100);
+            let decimalStr = '';
+
+            if (decimal > 0) {
+                let jiao = Math.floor(decimal / 10);
+                let fen = decimal % 10;
+
+                if (jiao > 0) {
+                    decimalStr = digits[jiao] + '角';
+                    if (fen > 0) {
+                        decimalStr += digits[fen] + '分';
+                    } else {
+                        decimalStr += '整';
+                    }
+                } else if (fen > 0) {
+                    decimalStr = '零' + digits[fen] + '分';
+                }
+            } else {
+                decimalStr = '整';
+            }
+
+            return result + '元' + decimalStr;
+        }
+
+        // 数字转中文读法
+        function numberToChineseReadout(num) {
+            const digits = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+            const units = ['', '十', '百', '千'];
+            const bigUnits = ['', '万', '亿', '兆'];
+
+            let integer = Math.floor(num);
+
+            if (integer === 0) {
+                return '零';
+            }
+
+            let result = '';
+            let unitPos = 0;
+            let needZero = false;
+
+            while (integer > 0) {
+                let section = integer % 10000;
+                let sectionStr = '';
+                let unit = 0;
+
+                if (section === 0) {
+                    needZero = true;
+                } else {
+                    let tempStr = '';
+                    while (section > 0) {
+                        let digit = section % 10;
+                        if (digit === 0) {
+                            if (tempStr !== '' && !tempStr.startsWith('零')) {
+                                tempStr = '零' + tempStr;
+                            }
+                        } else {
+                            let unitStr = units[unit];
+                            if (unit === 1 && digit === 1 && tempStr === '') {
+                                unitStr = '十';
+                            }
+                            tempStr = digits[digit] + unitStr + tempStr;
+                        }
+                        section = Math.floor(section / 10);
+                        unit++;
+                    }
+                    sectionStr = tempStr + bigUnits[unitPos];
+                    if (needZero && result !== '') {
+                        sectionStr = '零' + sectionStr;
+                    }
+                    needZero = false;
+                }
+
+                if (sectionStr !== '') {
+                    result = sectionStr + result;
+                }
+                integer = Math.floor(integer / 10000);
+                unitPos++;
+            }
+
+            result = result.replace(/零+/, '零').replace(/^零+/, '').replace(/零+$/, '');
+
+            if (result === '') {
+                result = '零';
+            }
+
+            return result;
+        }
+
+        // 初始化
+        convertNumber();
+    </script>
+</body>
+</html>
