@@ -377,17 +377,17 @@
                 <div class="form-section">
                     <div class="section-label">开始日期</div>
                     <div class="input-wrapper">
-                        <input type="number" class="input-field date-part" id="intervalStartYear" placeholder="年" min="1900" max="9999" oninput="handleDateInput(this, 'month')">
-                        <input type="number" class="input-field date-part" id="intervalStartMonth" placeholder="月" min="1" max="12" oninput="handleDateInput(this, 'day')">
-                        <input type="number" class="input-field date-part" id="intervalStartDay" placeholder="日" min="1" max="31" oninput="calculateInterval()">
+                        <input type="number" class="input-field date-part" id="intervalStartYear" placeholder="年" min="1900" max="9999" oninput="handleDateInput(this, 'month')" onchange="validateDateInput(this)">
+                        <input type="number" class="input-field date-part" id="intervalStartMonth" placeholder="月" min="1" max="12" oninput="handleDateInput(this, 'day')" onchange="validateDateInput(this)">
+                        <input type="number" class="input-field date-part" id="intervalStartDay" placeholder="日" min="1" max="31" oninput="calculateInterval()" onchange="validateDateInput(this)">
                     </div>
                 </div>
                 <div class="form-section">
                     <div class="section-label">结束日期</div>
                     <div class="input-wrapper">
-                        <input type="number" class="input-field date-part" id="intervalEndYear" placeholder="年" min="1900" max="9999" oninput="handleDateInput(this, 'month')">
-                        <input type="number" class="input-field date-part" id="intervalEndMonth" placeholder="月" min="1" max="12" oninput="handleDateInput(this, 'day')">
-                        <input type="number" class="input-field date-part" id="intervalEndDay" placeholder="日" min="1" max="31" oninput="calculateInterval()">
+                        <input type="number" class="input-field date-part" id="intervalEndYear" placeholder="年" min="1900" max="9999" oninput="handleDateInput(this, 'month')" onchange="validateDateInput(this)">
+                        <input type="number" class="input-field date-part" id="intervalEndMonth" placeholder="月" min="1" max="12" oninput="handleDateInput(this, 'day')" onchange="validateDateInput(this)">
+                        <input type="number" class="input-field date-part" id="intervalEndDay" placeholder="日" min="1" max="31" oninput="calculateInterval()" onchange="validateDateInput(this)">
                     </div>
                 </div>
             </div>
@@ -397,9 +397,9 @@
                 <div class="form-section">
                     <div class="section-label">起始日期</div>
                     <div class="input-wrapper">
-                        <input type="number" class="input-field date-part" id="calcStartYear" placeholder="年" min="1900" max="9999" oninput="handleDateInput(this, 'month')">
-                        <input type="number" class="input-field date-part" id="calcStartMonth" placeholder="月" min="1" max="12" oninput="handleDateInput(this, 'day')">
-                        <input type="number" class="input-field date-part" id="calcStartDay" placeholder="日" min="1" max="31" oninput="calculateDate()">
+                        <input type="number" class="input-field date-part" id="calcStartYear" placeholder="年" min="1900" max="9999" oninput="handleDateInput(this, 'month')" onchange="validateDateInput(this)">
+                        <input type="number" class="input-field date-part" id="calcStartMonth" placeholder="月" min="1" max="12" oninput="handleDateInput(this, 'day')" onchange="validateDateInput(this)">
+                        <input type="number" class="input-field date-part" id="calcStartDay" placeholder="日" min="1" max="31" oninput="calculateDate()" onchange="validateDateInput(this)">
                     </div>
                 </div>
                 <div class="form-section">
@@ -433,26 +433,86 @@
     <script>
         let currentMode = 'interval';
 
-        // 处理日期输入自动跳转
+        // 处理日期输入自动跳转和限制
         function handleDateInput(input, nextField) {
-            const val = input.value;
-            // 限制输入长度
-            const isYear = input.placeholder === '年';
-            const maxLen = isYear ? 4 : 2;
+            const val = input.value.replace(/\D/g, ''); // 只允许数字
+            const placeholder = input.placeholder;
 
-            // 限制只能输入指定长度
-            if (val.length > maxLen) {
-                input.value = val.slice(0, maxLen);
+            // 年份处理
+            if (placeholder === '年') {
+                if (val.length > 4) {
+                    input.value = val.slice(0, 4);
+                }
+                // 满 4 位跳转到月份
+                if (val.length === 4) {
+                    const nextInput = input.closest('.input-wrapper').querySelector('[placeholder="月"]');
+                    if (nextInput) {
+                        nextInput.focus();
+                        nextInput.select();
+                    }
+                }
             }
+            // 月份处理
+            else if (placeholder === '月') {
+                if (val.length > 2) {
+                    input.value = val.slice(0, 2);
+                }
+                // 限制 1-12
+                const monthNum = parseInt(val);
+                if (monthNum > 12) {
+                    input.value = '12';
+                }
+                // 满 2 位且有效跳转到日期
+                if (val.length === 2 && monthNum >= 1 && monthNum <= 12) {
+                    const nextInput = input.closest('.input-wrapper').querySelector('[placeholder="日"]');
+                    if (nextInput) {
+                        nextInput.focus();
+                        nextInput.select();
+                    }
+                }
+            }
+            // 日期处理
+            else if (placeholder === '日') {
+                if (val.length > 2) {
+                    input.value = val.slice(0, 2);
+                }
+                // 限制 1-31
+                const dayNum = parseInt(val);
+                if (dayNum > 31) {
+                    input.value = '31';
+                }
+            }
+        }
 
-            // 年份输入满 4 位或月份输入满 2 位且有效时自动跳转
-            if ((isYear && val.length === 4) || (!isYear && val.length === 2 && parseInt(val) > 0)) {
-                // 根据 placeholder 找到下一个输入框
+        // 验证日期输入（失焦时）
+        function validateDateInput(input) {
+            const val = input.value;
+            const placeholder = input.placeholder;
+
+            if (!val) return;
+
+            const num = parseInt(val);
+
+            if (placeholder === '月') {
+                if (num < 1 || num > 12) {
+                    input.value = '';
+                }
+            } else if (placeholder === '日') {
+                // 根据年份和月份计算该月最大天数
                 const wrapper = input.closest('.input-wrapper');
-                const nextInput = wrapper.querySelector(`[placeholder="${nextField}"]`);
-                if (nextInput) {
-                    nextInput.focus();
-                    nextInput.select();
+                const yearVal = wrapper.querySelector('[placeholder="年"]').value;
+                const monthVal = wrapper.querySelector('[placeholder="月"]').value;
+
+                if (yearVal && monthVal) {
+                    const year = parseInt(yearVal);
+                    const month = parseInt(monthVal);
+                    const maxDay = new Date(year, month, 0).getDate(); // 当月最大天数
+
+                    if (num < 1 || num > maxDay) {
+                        input.value = String(maxDay).padStart(2, '0');
+                    }
+                } else if (num < 1 || num > 31) {
+                    input.value = '31';
                 }
             }
         }
