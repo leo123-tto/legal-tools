@@ -328,7 +328,7 @@
             <!-- 案件类型 -->
             <div class="form-section">
                 <div class="section-label">案件类型</div>
-                <div class="options-grid grid-3">
+                <div class="options-grid grid-2">
                     <button class="option-btn type-btn active" onclick="selectType('property', this)">
                         <span class="icon">💰</span>
                         <span>财产案件</span>
@@ -339,11 +339,6 @@
                         <span>离婚案件</span>
                         <span class="desc">基础费 + 财产分割</span>
                     </button>
-                    <button class="option-btn type-btn" onclick="selectType('preservation', this)">
-                        <span class="icon">🔒</span>
-                        <span>财产保全</span>
-                        <span class="desc">最高 5000 元</span>
-                    </button>
                 </div>
             </div>
 
@@ -352,7 +347,25 @@
                 <div class="form-section">
                     <div class="section-label">诉讼标的额</div>
                     <div class="input-wrapper">
-                        <input type="number" class="input-field" id="propertyAmount" placeholder="0" min="0" step="0.01" oninput="calculateFee()">
+                        <input type="number" class="input-field" id="propertyAmount" placeholder="0" min="0" step="0.01" oninput="syncPreservationAmount(); calculateFee()">
+                        <span class="input-suffix">万元</span>
+                    </div>
+                </div>
+                <div class="form-section">
+                    <div class="section-label">是否需要财产保全</div>
+                    <div class="options-grid grid-2">
+                        <button class="option-btn" id="preservationNo" onclick="setPreservation(false, this)">
+                            <span>不需要</span>
+                        </button>
+                        <button class="option-btn active" id="preservationYes" onclick="setPreservation(true, this)">
+                            <span>需要</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-section" id="preservationAmountSection">
+                    <div class="section-label">保全财产数额</div>
+                    <div class="input-wrapper">
+                        <input type="number" class="input-field" id="preservationAmount" placeholder="0" min="0" step="0.01" oninput="calculateFee()">
                         <span class="input-suffix">万元</span>
                     </div>
                 </div>
@@ -363,7 +376,7 @@
                 <div class="form-section">
                     <div class="section-label">财产总额</div>
                     <div class="input-wrapper">
-                        <input type="number" class="input-field" id="divorceAmount" placeholder="0" min="0" step="0.01" oninput="calculateFee()">
+                        <input type="number" class="input-field" id="divorceAmount" placeholder="0" min="0" step="0.01" oninput="syncDivorcePreservationAmount(); calculateFee()">
                         <span class="input-suffix">万元</span>
                     </div>
                 </div>
@@ -378,14 +391,21 @@
                         </button>
                     </div>
                 </div>
-            </div>
-
-            <!-- 财产保全输入 -->
-            <div id="preservationCaseInput" class="hidden">
                 <div class="form-section">
+                    <div class="section-label">是否需要财产保全</div>
+                    <div class="options-grid grid-2">
+                        <button class="option-btn" id="divorcePreservationNo" onclick="setDivorcePreservation(false, this)">
+                            <span>不需要</span>
+                        </button>
+                        <button class="option-btn active" id="divorcePreservationYes" onclick="setDivorcePreservation(true, this)">
+                            <span>需要</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="form-section" id="divorcePreservationAmountSection">
                     <div class="section-label">保全财产数额</div>
                     <div class="input-wrapper">
-                        <input type="number" class="input-field" id="preservationAmount" placeholder="0" min="0" step="0.01" oninput="calculateFee()">
+                        <input type="number" class="input-field" id="divorcePreservationAmount" placeholder="0" min="0" step="0.01" oninput="calculateFee()">
                         <span class="input-suffix">万元</span>
                     </div>
                 </div>
@@ -398,6 +418,12 @@
                     <div class="result-value" id="feeResult">--</div>
                     <div class="result-range" id="feeDetail">--</div>
                 </div>
+                <!-- 财产保全费卡片 -->
+                <div class="result-card hidden" id="preservationFeeCard" style="margin-top: 12px;">
+                    <div class="result-label">🔒 财产保全费</div>
+                    <div class="result-value" id="preservationFeeResult">--</div>
+                    <div class="result-range" id="preservationFeeDetail">--</div>
+                </div>
             </div>
         </div>
     </div>
@@ -408,6 +434,8 @@
     <script>
         let currentType = 'property';
         let divorceHasSplit = true;
+        let needPreservation = true;
+        let divorceNeedPreservation = true;
 
         // 选择案件类型
         function selectType(type, btn) {
@@ -418,24 +446,64 @@
 
             const propertyInput = document.getElementById('propertyCaseInput');
             const divorceInput = document.getElementById('divorceCaseInput');
-            const preservationInput = document.getElementById('preservationCaseInput');
 
             if (type === 'property') {
                 propertyInput.classList.remove('hidden');
                 divorceInput.classList.add('hidden');
-                preservationInput.classList.add('hidden');
-                calculateFee();
-            } else if (type === 'divorce') {
-                propertyInput.classList.add('hidden');
-                divorceInput.classList.remove('hidden');
-                preservationInput.classList.add('hidden');
+                // 自动填充保全金额为标的金额
+                syncPreservationAmount();
                 calculateFee();
             } else {
                 propertyInput.classList.add('hidden');
-                divorceInput.classList.add('hidden');
-                preservationInput.classList.remove('hidden');
+                divorceInput.classList.remove('hidden');
+                // 自动填充保全金额为财产总额
+                syncDivorcePreservationAmount();
                 calculateFee();
             }
+        }
+
+        // 同步保全金额与标的金额（财产案件）
+        function syncPreservationAmount() {
+            const amount = document.getElementById('propertyAmount').value;
+            document.getElementById('preservationAmount').value = amount || '';
+        }
+
+        // 同步保全金额与财产总额（离婚案件）
+        function syncDivorcePreservationAmount() {
+            const amount = document.getElementById('divorceAmount').value;
+            document.getElementById('divorcePreservationAmount').value = amount || '';
+        }
+
+        // 设置财产保全（财产案件）
+        function setPreservation(need, btn) {
+            needPreservation = need;
+            document.getElementById('preservationNo').classList.toggle('active', !need);
+            document.getElementById('preservationYes').classList.toggle('active', need);
+
+            const section = document.getElementById('preservationAmountSection');
+            if (need) {
+                section.classList.remove('hidden');
+                syncPreservationAmount();
+            } else {
+                section.classList.add('hidden');
+            }
+            calculateFee();
+        }
+
+        // 设置财产保全（离婚案件）
+        function setDivorcePreservation(need, btn) {
+            divorceNeedPreservation = need;
+            document.getElementById('divorcePreservationNo').classList.toggle('active', !need);
+            document.getElementById('divorcePreservationYes').classList.toggle('active', need);
+
+            const section = document.getElementById('divorcePreservationAmountSection');
+            if (need) {
+                section.classList.remove('hidden');
+                syncDivorcePreservationAmount();
+            } else {
+                section.classList.add('hidden');
+            }
+            calculateFee();
         }
 
         // 设置离婚案件是否涉及财产分割
@@ -512,6 +580,8 @@
         function calculateFee() {
             let fee = 0;
             let detail = '';
+            let preservationFee = 0;
+            let preservationDetail = '';
 
             if (currentType === 'property') {
                 const amount = parseFloat(document.getElementById('propertyAmount').value) || 0;
@@ -519,18 +589,28 @@
                 if (amount <= 0) {
                     document.getElementById('feeResult').textContent = '--';
                     document.getElementById('feeDetail').textContent = '--';
+                    document.getElementById('preservationFeeCard').classList.add('hidden');
                     return;
                 }
 
                 fee = calculatePropertyFee(amount);
                 detail = `标的额：${amount}万元`;
 
-            } else if (currentType === 'divorce') {
+                // 计算财产保全费
+                if (needPreservation) {
+                    const preservationAmount = parseFloat(document.getElementById('preservationAmount').value) || 0;
+                    preservationFee = calculatePreservationFee(preservationAmount);
+                    preservationDetail = `保全财产：${preservationAmount}万元`;
+                }
+
+            } else {
+                // 离婚案件
                 const amount = parseFloat(document.getElementById('divorceAmount').value) || 0;
 
                 if (amount <= 0 && !divorceHasSplit) {
                     document.getElementById('feeResult').textContent = '--';
                     document.getElementById('feeDetail').textContent = '--';
+                    document.getElementById('preservationFeeCard').classList.add('hidden');
                     return;
                 }
 
@@ -541,21 +621,15 @@
                     detail = `财产总额：${amount}万元`;
                 }
 
-            } else {
-                // 财产保全
-                const amount = parseFloat(document.getElementById('preservationAmount').value) || 0;
-
-                if (amount <= 0) {
-                    document.getElementById('feeResult').textContent = '--';
-                    document.getElementById('feeDetail').textContent = '--';
-                    return;
+                // 计算财产保全费
+                if (divorceNeedPreservation) {
+                    const preservationAmount = parseFloat(document.getElementById('divorcePreservationAmount').value) || 0;
+                    preservationFee = calculatePreservationFee(preservationAmount);
+                    preservationDetail = `保全财产：${preservationAmount}万元`;
                 }
-
-                fee = calculatePreservationFee(amount);
-                detail = `保全财产：${amount}万元`;
             }
 
-            // 格式化结果
+            // 格式化诉讼费结果
             let feeText = '';
             if (fee >= 10000) {
                 feeText = (fee / 10000).toFixed(2) + ' 万元';
@@ -565,6 +639,22 @@
 
             document.getElementById('feeResult').textContent = feeText;
             document.getElementById('feeDetail').textContent = detail;
+
+            // 显示/隐藏财产保全费卡片
+            const preservationCard = document.getElementById('preservationFeeCard');
+            if (preservationFee > 0) {
+                preservationCard.classList.remove('hidden');
+                let preservationText = '';
+                if (preservationFee >= 10000) {
+                    preservationText = (preservationFee / 10000).toFixed(2) + ' 万元';
+                } else {
+                    preservationText = preservationFee + ' 元';
+                }
+                document.getElementById('preservationFeeResult').textContent = preservationText;
+                document.getElementById('preservationFeeDetail').textContent = preservationDetail;
+            } else {
+                preservationCard.classList.add('hidden');
+            }
         }
 
         // 显示提示
