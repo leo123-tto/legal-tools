@@ -12,13 +12,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to Aliyun OSS
-        uses: fengzhizi715/oss-deployment-action@v1.0.4
+      - name: Setup Aliyun OSS
+        uses: manyuanrong/setup-ossutil@master
         with:
+          endpoint: ${{ secrets.ALIYUN_REGION }}.aliyuncs.com
           access-key-id: ${{ secrets.ALIYUN_ACCESS_KEY_ID }}
           access-key-secret: ${{ secrets.ALIYUN_ACCESS_KEY_SECRET }}
-          bucket: ${{ secrets.ALIYUN_BUCKET }}
-          region: ${{ secrets.ALIYUN_REGION }}
-          source-dir: ./
-          target-dir: /
-          delete-removed-files: false
+
+      - name: Deploy to OSS
+        run: |
+          ossutil cp -r -f ./ oss://${{ secrets.ALIYUN_BUCKET }}/
