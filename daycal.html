@@ -301,6 +301,52 @@
             opacity: 1;
         }
 
+        /* 律师事务所签名 */
+        .law-firm {
+            max-width: 480px;
+            margin: 28px auto 0;
+            padding: 20px 16px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(229, 229, 229, 0.5);
+            box-shadow: var(--shadow);
+        }
+
+        .law-firm-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .law-firm-lawyer {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--accent);
+        }
+
+        /* 输入框样式优化 */
+        .input-field[type="date"] {
+            padding: 18px 18px;
+            height: 60px;
+            font-family: inherit;
+        }
+
+        .input-field[type="number"] {
+            padding-right: 50px;
+        }
+
+        .input-field[type="number"]::-webkit-outer-spin-button,
+        .input-field[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .input-field[type="number"] {
+            -moz-appearance: textfield;
+        }
+
         @media (max-width: 480px) {
             body { padding: 16px 12px; }
             .card { padding: 20px 16px; }
@@ -310,6 +356,9 @@
             .options-grid.grid-2 { gap: 8px; }
             .option-btn { padding: 14px 10px; font-size: 14px; }
             .option-btn .icon { font-size: 20px; }
+            .law-firm { margin: 20px auto 0; padding: 16px 12px; }
+            .law-firm-name { font-size: 14px; }
+            .law-firm-lawyer { font-size: 13px; }
         }
     </style>
 </head>
@@ -326,7 +375,7 @@
         <div class="card">
             <!-- 计算模式 -->
             <div class="form-section">
-                <div class="section-label">计算模式</div>
+                <div class="section-label">计算方式</div>
                 <div class="options-grid grid-2">
                     <button class="option-btn mode-btn active" onclick="selectMode('interval', this)">
                         <span class="icon">📏</span>
@@ -383,6 +432,12 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- 律师事务所签名 -->
+    <div class="law-firm">
+        <div class="law-firm-name">江苏漫修（无锡）律师事务所</div>
+        <div class="law-firm-lawyer">刘成 律师</div>
     </div>
 
     <!-- 提示框 -->
