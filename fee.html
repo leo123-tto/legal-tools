@@ -44,6 +44,7 @@
             line-height: 1.6;
         }
 
+        /* 背景装饰元素 */
         body::before {
             content: '';
             position: fixed;
@@ -64,6 +65,7 @@
             margin: 0 auto;
         }
 
+        /* 头部 */
         .header {
             text-align: center;
             margin-bottom: 28px;
@@ -91,23 +93,7 @@
             font-weight: 500;
         }
 
-        .back-link {
-            position: absolute;
-            top: -10px;
-            left: 0;
-            font-size: 13px;
-            color: var(--accent);
-            text-decoration: none;
-            padding: 8px 12px;
-            background: rgba(30, 64, 175, 0.08);
-            border-radius: 20px;
-            transition: all 0.2s ease;
-        }
-
-        .back-link:hover {
-            background: rgba(30, 64, 175, 0.15);
-        }
-
+        /* 主卡片 */
         .card {
             background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(20px);
@@ -117,6 +103,7 @@
             box-shadow: var(--shadow);
         }
 
+        /* 表单分组 */
         .form-section {
             margin-bottom: 28px;
             padding-bottom: 28px;
@@ -149,6 +136,7 @@
             border-radius: 2px;
         }
 
+        /* 选项按钮组 */
         .options-grid {
             display: grid;
             gap: 12px;
@@ -156,6 +144,10 @@
 
         .options-grid.grid-2 {
             grid-template-columns: 1fr 1fr;
+        }
+
+        .options-grid.grid-3 {
+            grid-template-columns: repeat(3, 1fr);
         }
 
         .option-btn {
@@ -206,6 +198,7 @@
             color: var(--accent);
         }
 
+        /* 输入框 */
         .input-wrapper {
             position: relative;
         }
@@ -243,6 +236,7 @@
             font-weight: 600;
         }
 
+        /* 结果区域 */
         .result-section {
             margin-top: 28px;
             padding-top: 20px;
@@ -266,6 +260,55 @@
             text-align: center;
             border: 1px solid rgba(30, 64, 175, 0.15);
             box-shadow: 0 4px 16px rgba(30, 64, 175, 0.08);
+        }
+
+        /* 一口价卡片 */
+        #fixedResultCard .result-label {
+            margin-bottom: 10px;
+        }
+
+        /* 田字形布局 */
+        .risk-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            align-items: center;
+            max-width: 280px;
+            margin: 12px auto 0;
+            border: 2px solid rgba(30, 64, 175, 0.3);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(30, 64, 175, 0.06);
+        }
+
+        .risk-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-align: center;
+            font-weight: 600;
+            padding: 12px 8px;
+            background: rgba(255, 255, 255, 0.7);
+            border-bottom: 1px solid rgba(30, 64, 175, 0.12);
+        }
+
+        .risk-value {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--accent);
+            text-align: center;
+            line-height: 1.2;
+            padding: 12px 8px;
+            background: white;
+            border-bottom: 1px solid rgba(30, 64, 175, 0.12);
+            letter-spacing: -0.5px;
+        }
+
+        .risk-label.last {
+            border-bottom: none;
+        }
+
+        .risk-value.last {
+            border-bottom: none;
         }
 
         .result-label {
@@ -293,10 +336,50 @@
             border-top: 1px solid rgba(30, 64, 175, 0.1);
         }
 
+        /* 详情列表 */
+        .detail-list {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            margin-top: 18px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .detail-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.3px;
+        }
+
+        .detail-value.highlight {
+            color: var(--accent);
+            font-weight: 800;
+        }
+
         .hidden {
             display: none !important;
         }
 
+        /* 浮动提示 */
         .toast {
             position: fixed;
             bottom: 20px;
@@ -319,13 +402,14 @@
             opacity: 1;
         }
 
+        /* 响应式 */
         @media (max-width: 480px) {
             body { padding: 16px 12px; }
             .card { padding: 20px 16px; }
             .header h1 { font-size: 22px; }
             .header-icon { font-size: 36px; }
             .result-value { font-size: 32px; }
-            .options-grid.grid-2 { gap: 8px; }
+            .options-grid.grid-3 { gap: 8px; }
             .option-btn { padding: 14px 10px; font-size: 14px; }
             .option-btn .icon { font-size: 20px; }
         }
@@ -335,116 +419,99 @@
     <div class="container">
         <!-- 头部 -->
         <div class="header">
-            <a href="index.html" class="back-link">← 返回主页</a>
-            <span class="header-icon">💰</span>
-            <h1>律师费计算器</h1>
-            <p>江苏漫修（无锡）律师事务所</p>
+            <a href="index.html" class="back-link" style="position: absolute; top: -10px; left: 0; font-size: 13px; color: var(--accent); text-decoration: none; padding: 8px 12px; background: rgba(30, 64, 175, 0.08); border-radius: 20px;">← 返回主页</a>
+            <span class="header-icon">⚖️</span>
+            <h1>律师费报价方案</h1>
+            <p>江苏漫修（无锡）律师事务所 · 刘成律师</p>
         </div>
 
         <!-- 主卡片 -->
         <div class="card">
-            <!-- 计算模式 -->
+            <!-- 收费模式 -->
             <div class="form-section">
-                <div class="section-label">计算模式</div>
+                <div class="section-label">收费模式</div>
                 <div class="options-grid grid-2">
                     <button class="option-btn mode-btn active" onclick="selectMode('fixed', this)">
-                        <span class="icon">💵</span>
+                        <span class="icon">💰</span>
                         <span>一口价</span>
                         <span class="desc">固定收费</span>
                     </button>
                     <button class="option-btn mode-btn" onclick="selectMode('risk', this)">
                         <span class="icon">📊</span>
                         <span>基础 + 风险</span>
-                        <span class="desc">前期 + 后期</span>
+                        <span class="desc">前期 + 提成</span>
                     </button>
                 </div>
             </div>
 
-            <!-- 一口价模式输入 -->
-            <div id="fixedMode">
-                <div class="form-section">
-                    <div class="section-label">案件类型</div>
-                    <div class="options-grid grid-2">
-                        <button class="option-btn type-btn active" onclick="selectType('civil', this)">
-                            <span>民事案件</span>
-                        </button>
-                        <button class="option-btn type-btn" onclick="selectType('criminal', this)">
-                            <span>刑事案件</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="form-section">
-                    <div class="section-label">案件难度</div>
-                    <div class="options-grid grid-3">
-                        <button class="option-btn diff-btn active" onclick="selectDifficulty('easy', this)">
-                            <span>简单</span>
-                        </button>
-                        <button class="option-btn diff-btn" onclick="selectDifficulty('medium', this)">
-                            <span>普通</span>
-                        </button>
-                        <button class="option-btn diff-btn" onclick="selectDifficulty('hard', this)">
-                            <span>复杂</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="form-section">
-                    <div class="section-label">标的额（万元）</div>
-                    <div class="input-wrapper">
-                        <input type="number" class="input-field" id="fixedAmount" placeholder="0" min="0" step="0.01" oninput="calculateFixed()">
-                        <span class="input-suffix">万元</span>
-                    </div>
+            <!-- 案件标的 -->
+            <div class="form-section">
+                <div class="section-label">案件标的</div>
+                <div class="input-wrapper">
+                    <input type="number" class="input-field" id="amount" placeholder="0" min="0" step="0.5" oninput="autoCalculate()">
+                    <span class="input-suffix">万元</span>
                 </div>
             </div>
 
-            <!-- 基础 + 风险模式输入 -->
-            <div id="riskMode" class="hidden">
-                <div class="form-section">
-                    <div class="section-label">案件类型</div>
-                    <div class="options-grid grid-2">
-                        <button class="option-btn type-btn active" onclick="selectRiskType('civil', this)">
-                            <span>民事案件</span>
-                        </button>
-                        <button class="option-btn type-btn" onclick="selectRiskType('commercial', this)">
-                            <span>商事案件</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="form-section">
-                    <div class="section-label">案件难度</div>
-                    <div class="options-grid grid-3">
-                        <button class="option-btn diff-btn active" onclick="selectRiskDifficulty('easy', this)">
-                            <span>简单</span>
-                        </button>
-                        <button class="option-btn diff-btn" onclick="selectRiskDifficulty('medium', this)">
-                            <span>普通</span>
-                        </button>
-                        <button class="option-btn diff-btn" onclick="selectRiskDifficulty('hard', this)">
-                            <span>复杂</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="form-section">
-                    <div class="section-label">标的额（万元）</div>
-                    <div class="input-wrapper">
-                        <input type="number" class="input-field" id="riskAmount" placeholder="0" min="0" step="0.01" oninput="calculateRisk()">
-                        <span class="input-suffix">万元</span>
-                    </div>
+            <!-- 执行难度（基础 + 风险模式显示） -->
+            <div class="form-section" id="difficultySection" style="display: none;">
+                <div class="section-label">执行难度</div>
+                <div class="options-grid grid-3">
+                    <button class="option-btn difficulty-btn" onclick="selectDifficulty('simple', this)">
+                        <span class="icon">😊</span>
+                        <span>简单</span>
+                    </button>
+                    <button class="option-btn difficulty-btn active" onclick="selectDifficulty('normal', this)">
+                        <span class="icon">😐</span>
+                        <span>一般</span>
+                    </button>
+                    <button class="option-btn difficulty-btn" onclick="selectDifficulty('hard', this)">
+                        <span class="icon">😰</span>
+                        <span>困难</span>
+                    </button>
                 </div>
             </div>
 
             <!-- 结果区域 -->
-            <div class="result-section show" id="resultSection">
-                <div class="result-card">
-                    <div class="result-label" id="resultLabel">💵 律师费</div>
-                    <div class="result-value" id="resultValue">--</div>
-                    <div class="result-range" id="resultDetail">--</div>
+            <div class="result-section" id="resultSection">
+                <!-- 一口价结果卡片 -->
+                <div class="result-card" id="fixedResultCard">
+                    <div class="result-label">📌 建议报价（一口价）</div>
+                    <div class="result-value" id="fixedPrice">--</div>
+                    <div class="result-range" id="fixedRange">参考区间：--</div>
+                </div>
+
+                <!-- 基础 + 风险结果卡片 -->
+                <div class="result-card hidden" id="riskResultCard">
+                    <div class="result-label" style="margin-bottom: 10px;">📊 报价方案</div>
+                    <div class="risk-grid">
+                        <div class="risk-label">基础律师费</div>
+                        <div class="risk-value" id="riskBasePrice">--</div>
+                        <div class="risk-label last">风险代理比例</div>
+                        <div class="risk-value last" id="riskRateDisplay">--</div>
+                    </div>
+                </div>
+
+                <!-- 详情列表（仅基础 + 风险模式显示） -->
+                <div class="detail-list hidden" id="resultDetails">
+                    <div class="detail-item">
+                        <span class="detail-label">预计执行到位</span>
+                        <span class="detail-value" id="detailExpect">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">基础律师费</span>
+                        <span class="detail-value highlight" id="detailBase">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">风险代理费</span>
+                        <span class="detail-value highlight" id="detailRisk">--</span>
+                    </div>
+                    <div class="detail-item" style="background: rgba(13, 148, 136, 0.05);">
+                        <span class="detail-label">💰 预计律师费</span>
+                        <span class="detail-value" id="detailTotal">--</span>
+                    </div>
                 </div>
             </div>
-        </div>
-
-        <!-- 底部信息 -->
-        <div style="text-align: center; margin-top: 24px; margin-bottom: 24px;">
-            <p style="font-size: 14px; font-weight: 600; color: var(--text-primary);">江苏漫修（无锡）律师事务所 刘成律师</p>
         </div>
     </div>
 
@@ -452,160 +519,169 @@
     <div class="toast" id="toast"></div>
 
     <script>
+        // 状态
         let currentMode = 'fixed';
-        let currentType = 'civil';
-        let currentDifficulty = 'easy';
-        let currentRiskType = 'civil';
-        let currentRiskDifficulty = 'easy';
-
-        // 费率表（参考）
-        const fixedRates = {
-            civil: { easy: 0.03, medium: 0.04, hard: 0.05 },
-            criminal: { easy: 0.04, medium: 0.05, hard: 0.06 }
-        };
-
-        const riskRates = {
-            civil: { easy: 0.02, medium: 0.025, hard: 0.03 },
-            commercial: { easy: 0.025, medium: 0.03, hard: 0.035 }
-        };
-
-        const riskRatios = {
-            civil: { easy: 0.08, medium: 0.1, hard: 0.12 },
-            commercial: { easy: 0.1, medium: 0.12, hard: 0.15 }
-        };
+        let currentDifficulty = 'normal';
+        let currentRiskRate = 10;
+        let currentExpectRate = 60;
 
         // 选择模式
         function selectMode(mode, btn) {
             currentMode = mode;
 
+            // 清除所有模式按钮的激活状态
             document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            // 添加当前按钮的激活状态
             btn.classList.add('active');
 
-            const fixedMode = document.getElementById('fixedMode');
-            const riskMode = document.getElementById('riskMode');
-            const resultLabel = document.getElementById('resultLabel');
+            // 显示/隐藏难度区域
+            const difficultySection = document.getElementById('difficultySection');
 
-            if (mode === 'fixed') {
-                fixedMode.classList.remove('hidden');
-                riskMode.classList.add('hidden');
-                resultLabel.textContent = '💵 律师费';
-                calculateFixed();
+            if (mode === 'risk') {
+                difficultySection.style.display = 'block';
+                // 添加展开动画
+                difficultySection.animate([
+                    { opacity: 0, transform: 'translateY(-10px)' },
+                    { opacity: 1, transform: 'translateY(0)' }
+                ], { duration: 300, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
             } else {
-                fixedMode.classList.add('hidden');
-                riskMode.classList.remove('hidden');
-                resultLabel.textContent = '📊 律师费';
-                calculateRisk();
+                difficultySection.style.display = 'none';
             }
+
+            // 隐藏详情列表，然后根据当前输入重新计算
+            document.getElementById('resultDetails').classList.add('hidden');
+            autoCalculate();
         }
 
-        // 选择案件类型（一口价）
-        function selectType(type, btn) {
-            currentType = type;
-            document.querySelectorAll('#fixedMode .type-btn').forEach(b => b.classList.remove('active'));
+        // 自动计算（带防抖）
+        let calcTimer = null;
+        function autoCalculate() {
+            clearTimeout(calcTimer);
+            calcTimer = setTimeout(() => {
+                const amount = parseFloat(document.getElementById('amount').value);
+                if (amount && amount > 0) {
+                    calculate();
+                }
+            }, 300);
+        }
+
+        // 选择难度
+        function selectDifficulty(difficulty, btn) {
+            currentDifficulty = difficulty;
+
+            // 根据难度自动设置风险代理比例和预计执行到位比例
+            const riskRates = { simple: 7, normal: 10, hard: 15 };
+            const expectRates = { simple: 90, normal: 60, hard: 20 };
+            currentRiskRate = riskRates[difficulty];
+            currentExpectRate = expectRates[difficulty];
+
+            document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            calculateFixed();
+
+            autoCalculate();
         }
 
-        // 选择难度（一口价）
-        function selectDifficulty(diff, btn) {
-            currentDifficulty = diff;
-            document.querySelectorAll('#fixedMode .diff-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            calculateFixed();
+        // 一口价计算
+        function calculateFixed(amount) {
+            if (amount <= 1) return 1;
+            if (amount <= 20) return Math.max(1, amount * 0.10);
+            if (amount <= 50) return 2 + (amount - 20) * 0.05;
+            if (amount <= 100) return 3.5 + (amount - 50) * 0.03;
+            if (amount <= 250) return 5 + (amount - 100) * 0.04;
+            if (amount <= 500) return 11 + (amount - 250) * 0.028;
+            if (amount <= 1000) return 18 + (amount - 500) * 0.02;
+            return 28 + (amount - 1000) * 0.015;
         }
 
-        // 选择案件类型（基础 + 风险）
-        function selectRiskType(type, btn) {
-            currentRiskType = type;
-            document.querySelectorAll('#riskMode .type-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            calculateRisk();
+        // 基础 + 风险总预期计算
+        function calculateRiskTotal(amount) {
+            return calculateFixed(amount) * 1.8;
         }
 
-        // 选择难度（基础 + 风险）
-        function selectRiskDifficulty(diff, btn) {
-            currentRiskDifficulty = diff;
-            document.querySelectorAll('#riskMode .diff-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            calculateRisk();
-        }
-
-        // 计算一口价
-        function calculateFixed() {
-            const amount = parseFloat(document.getElementById('fixedAmount').value) || 0;
-
-            if (amount <= 0) {
-                document.getElementById('resultValue').textContent = '--';
-                document.getElementById('resultDetail').textContent = '--';
-                return;
-            }
-
-            const rate = fixedRates[currentType][currentDifficulty];
-            const fee = Math.round(amount * 10000 * rate);
-
-            let feeText = '';
-            if (fee >= 10000) {
-                feeText = (fee / 10000).toFixed(2) + ' 万元';
+        // 格式化金额
+        function formatMoney(num) {
+            const rounded = Math.round(num * 2) / 2;
+            if (rounded >= 10000) {
+                return (rounded / 10000).toFixed(2) + ' 亿元';
+            } else if (rounded >= 100) {
+                return Math.round(rounded) + ' 万元';
+            } else if (rounded >= 1) {
+                return rounded.toFixed(1) + ' 万元';
             } else {
-                feeText = fee + ' 元';
+                return rounded.toFixed(2) + ' 万元';
             }
-
-            document.getElementById('resultValue').textContent = feeText;
-            document.getElementById('resultDetail').textContent = `标的额：${amount}万元 · ${currentType === 'civil' ? '民事' : '刑事'} · ${getDifficultyName(currentDifficulty)}`;
         }
 
-        // 计算基础 + 风险
-        function calculateRisk() {
-            const amount = parseFloat(document.getElementById('riskAmount').value) || 0;
-
-            if (amount <= 0) {
-                document.getElementById('resultValue').textContent = '--';
-                document.getElementById('resultDetail').textContent = '--';
-                return;
-            }
-
-            const rate = riskRates[currentRiskType][currentRiskDifficulty];
-            const ratio = riskRatios[currentRiskType][currentRiskDifficulty];
-
-            const baseFee = Math.round(amount * 10000 * rate);
-            const riskFee = Math.round(amount * 10000 * ratio);
-            const totalFee = baseFee + riskFee;
-
-            let totalText = '';
-            if (totalFee >= 10000) {
-                totalText = (totalFee / 10000).toFixed(2) + ' 万元';
-            } else {
-                totalText = totalFee + ' 元';
-            }
-
-            let baseText = '';
-            if (baseFee >= 10000) {
-                baseText = (baseFee / 10000).toFixed(2) + ' 万元';
-            } else {
-                baseText = baseFee + ' 元';
-            }
-
-            let riskText = '';
-            if (riskFee >= 10000) {
-                riskText = (riskFee / 10000).toFixed(2) + ' 万元';
-            } else {
-                riskText = riskFee + ' 元';
-            }
-
-            document.getElementById('resultValue').textContent = totalText;
-            document.getElementById('resultDetail').textContent = `基础：${baseText} + 风险：${riskText}`;
-        }
-
-        function getDifficultyName(diff) {
-            const names = { easy: '简单', medium: '普通', hard: '复杂' };
-            return names[diff];
-        }
-
+        // 显示提示
         function showToast(message) {
             const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        // 计算
+        function calculate() {
+            const amount = parseFloat(document.getElementById('amount').value);
+
+            if (!amount || amount <= 0) {
+                document.getElementById('resultSection').classList.remove('show');
+                return;
+            }
+
+            const fixedResultCard = document.getElementById('fixedResultCard');
+            const riskResultCard = document.getElementById('riskResultCard');
+            const resultDetails = document.getElementById('resultDetails');
+
+            if (currentMode === 'fixed') {
+                // 一口价模式
+                fixedResultCard.classList.remove('hidden');
+                riskResultCard.classList.add('hidden');
+                resultDetails.classList.add('hidden');
+
+                const fee = calculateFixed(amount);
+                const lowFee = Math.max(1, fee * 0.8);
+                const highFee = fee * 1.2;
+
+                document.getElementById('fixedPrice').textContent = formatMoney(fee);
+                document.getElementById('fixedRange').textContent = `参考区间：${formatMoney(lowFee)} ~ ${formatMoney(highFee)}`;
+
+            } else {
+                // 基础 + 风险模式
+                fixedResultCard.classList.add('hidden');
+                riskResultCard.classList.remove('hidden');
+                resultDetails.classList.remove('hidden');
+
+                const totalExpected = calculateRiskTotal(amount);
+
+                // 内部费用分配比例（用于计算基础费和风险费）
+                const ratios = { simple: [30, 70], normal: [40, 60], hard: [50, 50] };
+                const [basePercent, riskPercent] = ratios[currentDifficulty];
+
+                // 基础律师费（按内部比例）
+                const baseFee = totalExpected * (basePercent / 100);
+
+                // 预计执行到位金额（根据难度对应的预计执行比例）
+                const expectAmount = amount * (currentExpectRate / 100);
+
+                // 实际风险代理费 = 执行到位金额 × 风险代理比例
+                const actualRiskFee = expectAmount * (currentRiskRate / 100);
+
+                // 实际总收费 = 基础费 + 实际风险费
+                const actualTotal = baseFee + actualRiskFee;
+
+                // 主卡片显示：基础律师费 + 风险比例
+                document.getElementById('riskBasePrice').textContent = formatMoney(baseFee);
+                document.getElementById('riskRateDisplay').textContent = `${currentRiskRate}%`;
+
+                // 详情列表
+                document.getElementById('detailExpect').textContent = `${formatMoney(expectAmount)}（${currentExpectRate}%）`;
+                document.getElementById('detailBase').textContent = formatMoney(baseFee);
+                document.getElementById('detailRisk').textContent = formatMoney(actualRiskFee);
+                document.getElementById('detailTotal').textContent = formatMoney(actualTotal);
+            }
+
+            document.getElementById('resultSection').classList.add('show');
         }
     </script>
 </body>
