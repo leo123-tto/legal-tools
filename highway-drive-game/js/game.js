@@ -149,6 +149,37 @@ const Game = {
 
         // 键盘事件
         document.addEventListener('keydown', (e) => this.handleKeyDown(e));
+
+        // 触屏控制事件
+        const touchUp = document.getElementById('touch-up');
+        const touchDown = document.getElementById('touch-down');
+
+        if (touchUp) {
+            touchUp.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.changeLane(-1);
+            });
+            touchUp.addEventListener('click', () => this.changeLane(-1));
+        }
+
+        if (touchDown) {
+            touchDown.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.changeLane(1);
+            });
+            touchDown.addEventListener('click', () => this.changeLane(1));
+        }
+    },
+
+    // 切换车道（触屏控制）
+    changeLane(direction) {
+        if (!this.state.running || this.state.paused) return;
+
+        if (direction === -1 && this.state.targetLane > 0) {
+            this.state.targetLane--;
+        } else if (direction === 1 && this.state.targetLane < 2) {
+            this.state.targetLane++;
+        }
     },
 
     // 键盘控制
@@ -176,6 +207,7 @@ const Game = {
         document.getElementById('service-area-alert').style.display = 'none';
         document.getElementById('refuel-success').style.display = 'none';
         document.getElementById('in-game-exit').style.display = 'none';
+        document.getElementById('touch-controls').style.display = 'none';
         document.getElementById('start-screen').style.display = 'flex';
         this.state.running = false;
         this.state.paused = false;
@@ -185,6 +217,12 @@ const Game = {
     start() {
         document.getElementById('start-screen').style.display = 'none';
         document.getElementById('in-game-exit').style.display = 'block';
+
+        // 在移动设备上显示触屏控制
+        if (window.innerWidth <= 600) {
+            document.getElementById('touch-controls').style.display = 'flex';
+        }
+
         this.state.running = true;
         this.state.paused = false;
         this.state.distance = 0;

@@ -157,6 +157,42 @@ body {
     z-index: 100;
 }
 
+/* 触屏控制按钮 */
+#touch-controls {
+    position: absolute;
+    bottom: 100px;
+    left: 0;
+    right: 0;
+    display: none;
+    justify-content: space-between;
+    padding: 0 20px;
+    pointer-events: auto;
+    z-index: 90;
+}
+
+.touch-btn {
+    width: 70px;
+    height: 70px;
+    background: rgba(255,255,255,0.3);
+    border: 3px solid #fff;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.1s;
+}
+
+.touch-btn:active {
+    background: rgba(78,204,163,0.6);
+    transform: scale(0.95);
+}
+
 /* 状态栏 */
 #status-bar {
     position: absolute;
@@ -730,8 +766,57 @@ body {
         font-size: 15px;
     }
 
+    /* 手机上显示触屏控制 */
+    #touch-controls {
+        display: flex;
+    }
+
+    .touch-btn {
+        width: 60px;
+        height: 60px;
+        font-size: 26px;
+    }
+
+    /* 状态栏移到底部避免和退出按钮重叠 */
+    #status-bar {
+        top: auto;
+        bottom: 180px;
+        left: 10px;
+        right: 10px;
+        justify-content: center;
+        gap: 15px;
+        padding: 8px 12px;
+    }
+
+    .status-item {
+        font-size: 12px;
+    }
+
+    .status-value {
+        font-size: 14px;
+    }
+
+    /* 退出按钮保持在右上角 */
     #in-game-exit {
         top: 10px;
         right: 10px;
+    }
+
+    /* 油量条移到底部 */
+    #fuel-bar-container {
+        position: absolute;
+        bottom: 240px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 200px;
+    }
+
+    /* 环境信息移到顶部 */
+    #env-info {
+        top: 50px;
+        bottom: auto;
+        left: 10px;
+        font-size: 12px;
+        padding: 6px 12px;
     }
 }
