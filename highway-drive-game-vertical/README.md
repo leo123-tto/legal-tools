@@ -47,6 +47,8 @@
 ```
 highway-drive-game-vertical/
 ├── index.html          # 主页面
+├── README.md           # 项目文档
+├── PROJECT_STATUS.md   # 状态文件
 ├── css/
 │   └── style.css       # 样式文件
 ├── js/
@@ -58,37 +60,8 @@ highway-drive-game-vertical/
 │   ├── cars.js         # 车辆配置数据
 │   ├── questions.js    # 题库数据
 │   └── roadNetwork.js  # 高速路网数据
-└── assets/             # 图片资源
+└── assets/             # 图片、音效资源
 ```
-
-## 核心模块说明
-
-### game.js - 游戏核心逻辑
-
-- `Game.init()` - 初始化游戏
-- `Game.start()` - 开始游戏
-- `Game.update()` - 更新游戏状态
-- `Game.render()` - 渲染画面
-- `Game.drawBackground()` - 绘制道路背景（含时间光线效果）
-- `Game.drawServiceArea()` - 绘制服务区
-- `Game.drawHighwayInfo()` - 绘制高速公路信息
-- `Game.updateNPCCars()` - 更新NPC车辆
-
-### 道路系统
-
-- 道路靠左显示，右侧留空给服务区
-- 三车道设计
-- 白色虚线作为车道分隔线
-- 黄色实线作为道路边缘线
-
-### 服务区系统
-
-- 出现在道路右侧
-- 建筑设计：主体建筑、三角形屋顶、窗户、门
-- 独立停车场区域
-- 显示真实服务区名称
-- 玩家靠近右侧车道时触发答题
-- 答对题目可以加油补给（每次20升）
 
 ## 本地运行
 
@@ -98,6 +71,16 @@ python3 -m http.server 8081
 ```
 
 然后在浏览器中访问 `http://localhost:8081`
+
+## 在线访问
+
+[https://www.lawtools.top/highway-drive-game-vertical/index.html](https://www.lawtools.top/highway-drive-game-vertical/index.html)
+
+## GitHub 状态
+
+- **仓库**：[https://github.com/leo123-tto/legal-tools](https://github.com/leo123-tto/legal-tools)
+- **目录**：`highway-drive-game-vertical/`
+- **部署**：GitHub Actions 自动部署到阿里云 OSS
 
 ## 版本历史
 
@@ -119,7 +102,8 @@ python3 -m http.server 8081
 - 油耗加快4倍，每次加油20升
 - 简化音效，只保留关键事件提示
 
-### v1.0 横屏版
+### v1.0 横屏版 (已下线)
 - 横屏设计
 - 使用背景图片
 - 车辆只能左右切换车道
+- 本地源码保留用于参考
