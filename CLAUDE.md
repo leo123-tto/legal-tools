@@ -90,26 +90,42 @@ git push origin main
 ### 基础原则
 
 - **极简现代风**：干净、留白充足、无多余装饰
-- **移动端优先**：所有工具必须在手机上可用
+- **移动端优先**：所有工具必须在手机上可用，优先适配 iPhone 竖屏比例
 - **无外部依赖**：不引入 CDN、不用 npm、不用框架（React/Vue/Tailwind 等）
 - **单文件优先**：HTML + CSS + JS 写在一个 .html 文件中，除非复杂度确实需要拆分
+- **中文界面**：按钮、标签、提示等一律使用中文，避免英文标签
+- **触摸友好**：按钮和输入框尺寸适合手指点击，间距合理，避免误触
 
-### 配色体系
+### 配色体系（浅色系）
+
+工具页面采用浅色系配色，柔和舒适，带蓝紫渐变点缀：
 
 ```css
-/* 主色调 - 所有工具统一 */
---accent: #1E40AF;          /* 主蓝色，按钮、链接、强调 */
---accent-hover: #1E3A8A;    /* 主色悬停态 */
+/* 页面背景 - 淡灰蓝，非纯白 */
+--bg-deep: #F0F1F5;
+
+/* 卡片背景 - 半透明白色毛玻璃 */
+--bg-card: rgba(255, 255, 255, 0.88);
+
+/* 输入框背景 */
+--bg-input: rgba(240, 242, 248, 0.8);
+--bg-input-focus: rgba(232, 236, 248, 0.95);
 
 /* 文字层级 */
---text-primary: #1A1A1A;    /* 标题、正文 */
---text-secondary: #6B6B6B;  /* 说明文字 */
---text-tertiary: #9B9B9B;   /* 辅助信息 */
+--text-primary: #1A1D2E;                    /* 标题、正文 */
+--text-secondary: rgba(60, 68, 90, 0.8);    /* 说明文字 */
+--text-dim: rgba(100, 110, 135, 0.65);      /* 辅助信息 */
 
-/* 背景 */
---bg-primary: #FAFAFA;      /* 页面背景 */
---border: #E5E5E5;          /* 边框、分割线 */
+/* 主色调 - 蓝紫渐变 */
+--accent: #4F6AF0;
+--accent-gradient: linear-gradient(135deg, #4F6AF0 0%, #9B6FE8 100%);
+
+/* 边框 */
+--border: rgba(80, 90, 130, 0.12);
+--border-focus: rgba(79, 106, 240, 0.45);
 ```
+
+首页保持原有配色（`--accent: #1E40AF`，`--bg-primary: #FAFAFA`）。
 
 ### 字体
 
@@ -132,8 +148,10 @@ font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Ro
 
 ### 响应式断点
 
+- 小屏手机：`max-width: 380px`，进一步压缩 padding、字号和间距
 - 移动端：`max-width: 480px`，减小 padding 和字号
 - 工具内部布局在小屏幕上应自动堆叠为单列
+- 输入框使用 `flex: 1; min-width: 0; width: 0;` 防止溢出容器
 
 ### 页面模板
 
