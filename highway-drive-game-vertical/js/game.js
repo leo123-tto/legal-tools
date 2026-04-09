@@ -19,6 +19,7 @@ const Game = {
         lastWeatherDistance: 0,  // 上次天气变换时的里程
         junctionCooldown: 0,
         serviceAreaCooldown: 0,
+        collisionCooldown: 0,  // 碰撞冷却
         currentRoutes: [],
         backgroundOffset: 0,
         currentCar: '灰色五菱之光',
@@ -147,16 +148,19 @@ const Game = {
 
         // 键盘
         document.addEventListener('keydown', (e) => this.handleKeyDown(e));
+        document.addEventListener('keyup', (e) => this.handleKeyUp(e));
 
-        // 滑动控制
+        // 滑动控制 + 点击变道
         let touchStartX = 0, touchStartY = 0;
         let isSwiping = false;
+        let touchMoved = false;
 
         this.canvas.addEventListener('touchstart', (e) => {
             if (!this.state.running || this.state.paused) return;
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
             isSwiping = true;
+            touchMoved = false;
         }, { passive: true });
 
         this.canvas.addEventListener('touchmove', (e) => {
@@ -166,18 +170,56 @@ const Game = {
             const deltaX = touchX - touchStartX;
             const deltaY = touchY - touchStartY;
 
-            // 更新目标位置
-            this.state.targetX = this.state.playerX + deltaX * 0.5;
-            this.state.targetY = this.state.playerY + deltaY * 0.5;
+            // 移动超过10px才算滑动，否则算点击
+            if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
+                touchMoved = true;
+            }
 
-            // 限制在道路范围内
-            this.state.targetX = Math.max(this.state.lanes.left, Math.min(this.state.lanes.right, this.state.targetX));
-            this.state.targetY = Math.max(this.canvas.height * 0.3, Math.min(this.canvas.height * 0.85, this.state.targetY));
+            // 只有滑动时才更新位置
+            if (touchMoved) {
+                this.state.targetX = this.state.playerX + deltaX * 0.5;
+                this.state.targetY = this.state.playerY + deltaY * 0.5;
+
+                // 限制在道路范围内
+                this.state.targetX = Math.max(this.state.lanes.left, Math.min(this.state.lanes.right, this.state.targetX));
+                this.state.targetY = Math.max(this.canvas.height * 0.3, Math.min(this.canvas.height * 0.85, this.state.targetY));
+            }
         }, { passive: true });
 
         this.canvas.addEventListener('touchend', (e) => {
+            // 如果没有滑动，就是点击变道
+            if (!touchMoved && isSwiping) {
+                const touchEndX = e.changedTouches[0].clientX;
+                // 点击屏幕左侧往左变道，右侧往右变道
+                if (touchEndX < this.canvas.width / 2) {
+                    this.changeLane(-1);
+                } else {
+                    this.changeLane(1);
+                }
+            }
             isSwiping = false;
         }, { passive: true });
+    },
+
+    // 点击变道
+    changeLane(direction) {
+        const currentLane = this.getCurrentLane();
+        const newLane = Math.max(0, Math.min(2, currentLane + direction));
+        this.state.targetX = this.state.lanes.positions[newLane];
+    },
+
+    // 获取当前车道
+    getCurrentLane() {
+        let closestLane = 0;
+        let minDist = Infinity;
+        for (let i = 0; i < this.state.lanes.positions.length; i++) {
+            const dist = Math.abs(this.state.playerX - this.state.lanes.positions[i]);
+            if (dist < minDist) {
+                minDist = dist;
+                closestLane = i;
+            }
+        }
+        return closestLane;
     },
 
     // 持续移动状态
@@ -211,6 +253,14 @@ const Game = {
         if (key === 'arrowdown' || key === 's') this.moveState.down = true;
         if (key === 'arrowleft' || key === 'a') this.moveState.left = true;
         if (key === 'arrowright' || key === 'd') this.moveState.right = true;
+    },
+
+    handleKeyUp(e) {
+        const key = e.key.toLowerCase();
+        if (key === 'arrowup' || key === 'w') this.moveState.up = false;
+        if (key === 'arrowdown' || key === 's') this.moveState.down = false;
+        if (key === 'arrowleft' || key === 'a') this.moveState.left = false;
+        if (key === 'arrowright' || key === 'd') this.moveState.right = false;
     },
 
     // 返回首页
@@ -318,6 +368,7 @@ const Game = {
         // 更新冷却时间
         if (this.state.junctionCooldown > 0) this.state.junctionCooldown--;
         if (this.state.serviceAreaCooldown > 0) this.state.serviceAreaCooldown--;
+        if (this.state.collisionCooldown > 0) this.state.collisionCooldown--;
 
         // 尝试生成服务区
         if (!this.state.serviceArea && this.state.serviceAreaCooldown <= 0 && Math.random() < 0.002) {
@@ -375,11 +426,11 @@ const Game = {
         this.state.playerY += dy * 0.15;
     },
 
-    // 更新NPC小车 - 只从上方出现
+    // 更新NPC小车 - 降低频率，减少数量
     updateNPCCars() {
-        // 生成NPC - 每个车道最多1辆车
+        // 生成NPC - 每个车道最多1辆车，降低生成频率
         this.state.npcSpawnTimer++;
-        if (this.state.npcSpawnTimer > 90 && this.state.npcCars.length < 3 && Math.random() < 0.02) {
+        if (this.state.npcSpawnTimer > 150 && this.state.npcCars.length < 2 && Math.random() < 0.015) {
             this.spawnNPCCar();
             this.state.npcSpawnTimer = 0;
         }
@@ -588,9 +639,9 @@ const Game = {
         Storage.save(this.state);
     },
 
-    // 碰撞检测
+    // 碰撞检测 - 改为扣分/扣油量，不结束游戏
     checkCollisions() {
-        const pw = 50, ph = 80; // 玀家车尺寸
+        const pw = 50, ph = 80;
         const px = this.state.playerX - pw/2;
         const py = this.state.playerY - ph/2;
 
@@ -601,10 +652,46 @@ const Game = {
             // 简单矩形碰撞
             if (px < nx + npc.width && px + pw > nx &&
                 py < ny + npc.height && py + ph > ny) {
-                this.gameOver('collision');
+
+                // 碰撞惩罚：扣10分，扣5升油，给玩家一个无敌时间
+                if (!this.state.collisionCooldown || this.state.collisionCooldown <= 0) {
+                    this.state.score = Math.max(0, this.state.score - 10);
+                    this.state.fuel = Math.max(0, this.state.fuel - 5);
+                    this.state.collisionCooldown = 120; // 2秒无敌时间
+
+                    // 碰撞闪红提示
+                    this.showCollisionWarning();
+
+                    AudioManager.playCollision();
+                }
                 return;
             }
         }
+    },
+
+    // 显示碰撞警告
+    showCollisionWarning() {
+        const warning = document.createElement('div');
+        warning.id = 'collision-warning';
+        warning.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            z-index: 200;
+            animation: fadeOut 1s forwards;
+            pointer-events: none;
+        `;
+        warning.textContent = '发生碰撞！-10分 -5升油';
+        document.body.appendChild(warning);
+
+        setTimeout(() => warning.remove(), 1000);
     },
 
     // 更新天气
@@ -655,87 +742,83 @@ const Game = {
         this.drawHighwayInfo();  // 绘制高速公路信息
     },
 
-    // 绘制背景 - Canvas绘制
+    // 绘制背景 - Canvas绘制，更精美
     drawBackground() {
         const ctx = this.ctx;
         const env = this.getEnvironment();
 
-        // 天空颜色
-        ctx.fillStyle = env.skyColor;
+        // 天空颜色 - 更柔和的渐变
+        let skyTop, skyBottom;
+        if (env.timeOfDay === '清晨') {
+            skyTop = '#FFB347'; skyBottom = '#FFE4B5';
+        } else if (env.timeOfDay === '上午') {
+            skyTop = '#87CEEB'; skyBottom = '#B0E0E6';
+        } else if (env.timeOfDay === '中午') {
+            skyTop = '#87CEEB'; skyBottom = '#E0F7FA';
+        } else if (env.timeOfDay === '下午') {
+            skyTop = '#87CEEB'; skyBottom = '#FFEFD5';
+        } else if (env.timeOfDay === '黄昏') {
+            skyTop = '#FF6347'; skyBottom = '#FFA07A';
+        } else if (env.timeOfDay === '夜晚') {
+            skyTop = '#191970'; skyBottom = '#0F0F23';
+        }
+
+        // 天空渐变
+        const skyGradient = ctx.createLinearGradient(0, 0, 0, this.canvas.height);
+        skyGradient.addColorStop(0, skyTop);
+        skyGradient.addColorStop(1, skyBottom);
+        ctx.fillStyle = skyGradient;
         ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-        // 根据时段添加光线效果
-        if (env.timeOfDay === '清晨') {
-            // 清晨 - 淡橙色渐变
-            const gradient = ctx.createLinearGradient(0, 0, 0, this.canvas.height);
-            gradient.addColorStop(0, 'rgba(255, 200, 100, 0.3)');
-            gradient.addColorStop(0.3, 'rgba(255, 180, 80, 0.1)');
-            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        } else if (env.timeOfDay === '黄昏') {
-            // 黄昏 - 橙红色渐变
-            const gradient = ctx.createLinearGradient(0, 0, 0, this.canvas.height);
-            gradient.addColorStop(0, 'rgba(255, 100, 50, 0.4)');
-            gradient.addColorStop(0.4, 'rgba(200, 50, 30, 0.2)');
-            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        } else if (env.timeOfDay === '夜晚') {
-            // 夜晚 - 深蓝色覆盖
-            ctx.fillStyle = 'rgba(0, 0, 50, 0.5)';
-            ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-            // 星星
-            ctx.fillStyle = '#FFF';
-            for (let i = 0; i < 20; i++) {
-                const sx = (i * 97 + this.state.backgroundOffset * 0.05) % this.canvas.width;
-                const sy = (i * 53) % (this.canvas.height * 0.3);
-                ctx.fillRect(sx, sy, 2, 2);
-            }
-
-            // 月亮
-            ctx.fillStyle = '#FFFF99';
-            ctx.beginPath();
-            ctx.arc(this.canvas.width - 60, 80, 25, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = '#FFFFCC';
-            ctx.beginPath();
-            ctx.arc(this.canvas.width - 65, 75, 20, 0, Math.PI * 2);
-            ctx.fill();
-        } else if (env.timeOfDay === '中午') {
-            // 中午 - 阳光较强，轻微高亮
-            ctx.fillStyle = 'rgba(255, 255, 200, 0.15)';
+        // 黄昏/清晨的阳光效果
+        if (env.timeOfDay === '清晨' || env.timeOfDay === '黄昏') {
+            ctx.fillStyle = 'rgba(255, 200, 100, 0.15)';
             ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         }
 
-        // 草地（两侧）
-        ctx.fillStyle = '#228B22';
+        // 夜晚星星
+        if (env.timeOfDay === '夜晚') {
+            ctx.fillStyle = '#FFF';
+            for (let i = 0; i < 30; i++) {
+                const sx = (i * 97 + this.state.backgroundOffset * 0.05) % this.canvas.width;
+                const sy = (i * 53) % (this.canvas.height * 0.3);
+                ctx.beginPath();
+                ctx.arc(sx, sy, Math.random() * 1.5 + 0.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            // 月亮
+            ctx.fillStyle = '#FFFFCC';
+            ctx.beginPath();
+            ctx.arc(this.canvas.width - 60, 60, 25, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#191970';
+            ctx.beginPath();
+            ctx.arc(this.canvas.width - 55, 55, 20, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // 草地 - 带纹理
+        ctx.fillStyle = '#3CB371';
         ctx.fillRect(0, 0, this.road.roadLeft, this.canvas.height);
         ctx.fillRect(this.road.roadRight, 0, this.canvas.width - this.road.roadRight, this.canvas.height);
 
-        // 道路
-        ctx.fillStyle = '#333333';
-        ctx.fillRect(this.road.roadLeft, 0, this.road.roadRight - this.road.roadLeft, this.canvas.height);
-
-        // 车道分隔线（白色虚线，从上往下滚动，模拟往前开）
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 3;
-        ctx.setLineDash([40, 30]);
-
-        const lineOffset = this.state.backgroundOffset % 70;
-        for (let i = 1; i < this.road.laneCount; i++) {
-            const x = this.road.roadLeft + this.road.laneWidth * i;
-            ctx.beginPath();
-            ctx.moveTo(x, lineOffset - 70);
-            ctx.lineTo(x, this.canvas.height + 70);
-            ctx.stroke();
+        // 草地纹理（简单的点）
+        ctx.fillStyle = '#2E8B57';
+        for (let i = 0; i < 50; i++) {
+            const gx = Math.random() * this.canvas.width;
+            const gy = Math.random() * this.canvas.height;
+            if (gx < this.road.roadLeft || gx > this.road.roadRight) {
+                ctx.fillRect(gx, gy, 2, 2);
+            }
         }
-        ctx.setLineDash([]);
+
+        // 道路 - 深灰色沥青
+        ctx.fillStyle = '#404040';
+        ctx.fillRect(this.road.roadLeft, 0, this.road.roadRight - this.road.roadLeft, this.canvas.height);
 
         // 道路边缘线（黄色实线）
         ctx.strokeStyle = '#FFD700';
-        ctx.lineWidth = 5;
+        ctx.lineWidth = 4;
         ctx.beginPath();
         ctx.moveTo(this.road.roadLeft, 0);
         ctx.lineTo(this.road.roadLeft, this.canvas.height);
@@ -744,9 +827,24 @@ const Game = {
         ctx.moveTo(this.road.roadRight, 0);
         ctx.lineTo(this.road.roadRight, this.canvas.height);
         ctx.stroke();
+
+        // 车道分隔线（白色虚线）
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([50, 30]);
+
+        const lineOffset = this.state.backgroundOffset % 80;
+        for (let i = 1; i < this.road.laneCount; i++) {
+            const x = this.road.roadLeft + this.road.laneWidth * i;
+            ctx.beginPath();
+            ctx.moveTo(x, lineOffset - 80);
+            ctx.lineTo(x, this.canvas.height + 80);
+            ctx.stroke();
+        }
+        ctx.setLineDash([]);
     },
 
-    // 绘制服务区 - 精美设计
+    // 绘制服务区 - 更卡通可爱
     drawServiceArea() {
         if (!this.state.serviceArea) return;
 
@@ -754,111 +852,133 @@ const Game = {
         const sa = this.state.serviceArea;
 
         // 服务区位置在道路右侧
-        const serviceX = this.road.roadRight + 25;
+        const serviceX = this.road.roadRight + 20;
         const serviceWidth = this.canvas.width - serviceX - 15;
         const baseY = sa.y;
 
-        // === 停车场区域 ===
-        ctx.fillStyle = '#4a4a4a';
-        ctx.fillRect(serviceX, baseY + 150, serviceWidth, 80);
+        // 阴影
+        ctx.fillStyle = 'rgba(0,0,0,0.15)';
+        ctx.fillRect(serviceX + 5, baseY + 5, serviceWidth, 200);
+
+        // === 停车场 ===
+        ctx.fillStyle = '#5D6D7E';
+        ctx.fillRect(serviceX, baseY + 160, serviceWidth, 50);
 
         // 停车位线
-        ctx.strokeStyle = '#FFFFFF';
+        ctx.strokeStyle = '#F4F4F4';
         ctx.lineWidth = 2;
-        for (let i = 0; i < 3; i++) {
-            const px = serviceX + 15 + i * (serviceWidth / 3);
+        for (let i = 0; i < 4; i++) {
+            const px = serviceX + 10 + i * (serviceWidth / 4);
             ctx.beginPath();
-            ctx.moveTo(px, baseY + 155);
-            ctx.lineTo(px, baseY + 225);
+            ctx.moveTo(px, baseY + 165);
+            ctx.lineTo(px, baseY + 205);
             ctx.stroke();
         }
 
+        // 停车场出入口箭头
+        ctx.fillStyle = '#F4D03F';
+        ctx.beginPath();
+        ctx.moveTo(this.road.roadRight - 5, baseY + 175);
+        ctx.lineTo(this.road.roadRight - 20, baseY + 170);
+        ctx.lineTo(this.road.roadRight - 20, baseY + 180);
+        ctx.closePath();
+        ctx.fill();
+
         // === 服务区主建筑 ===
-        const buildingWidth = serviceWidth - 20;
-        const buildingX = serviceX + 10;
-        const buildingY = baseY + 20;
+        const buildingWidth = serviceWidth - 15;
+        const buildingX = serviceX + 8;
+        const buildingY = baseY + 30;
         const buildingHeight = 120;
 
-        // 建筑主体
-        ctx.fillStyle = '#f5f5dc';  // 米白色
-        ctx.fillRect(buildingX, buildingY, buildingWidth, buildingHeight);
+        // 建筑阴影
+        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        ctx.fillRect(buildingX + 3, buildingY + 3, buildingWidth, buildingHeight);
 
-        // 屋顶（三角形）
-        ctx.fillStyle = '#8B0000';  // 深红色屋顶
+        // 建筑主体 - 米白色
+        ctx.fillStyle = '#FDFEFE';
+        this.roundRect(ctx, buildingX, buildingY, buildingWidth, buildingHeight, 5);
+
+        // 橙色屋顶
+        ctx.fillStyle = '#E74C3C';
         ctx.beginPath();
         ctx.moveTo(buildingX - 5, buildingY);
-        ctx.lineTo(buildingX + buildingWidth / 2, buildingY - 25);
+        ctx.lineTo(buildingX + buildingWidth / 2, buildingY - 20);
         ctx.lineTo(buildingX + buildingWidth + 5, buildingY);
         ctx.closePath();
         ctx.fill();
 
-        // 窗户
-        ctx.fillStyle = '#87CEEB';
-        const windowWidth = 25;
-        const windowHeight = 30;
+        // 屋顶边缘
+        ctx.strokeStyle = '#C0392B';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(buildingX - 5, buildingY);
+        ctx.lineTo(buildingX + buildingWidth / 2, buildingY - 20);
+        ctx.lineTo(buildingX + buildingWidth + 5, buildingY);
+        ctx.stroke();
+
+        // 窗户 - 蓝色
+        ctx.fillStyle = '#85C1E9';
+        const windowSize = 22;
         for (let i = 0; i < 3; i++) {
-            const wx = buildingX + 15 + i * (buildingWidth / 3);
-            ctx.fillRect(wx, buildingY + 15, windowWidth, windowHeight);
+            const wx = buildingX + 20 + i * (buildingWidth / 3.2);
+            this.roundRect(ctx, wx, buildingY + 20, windowSize, windowSize, 3);
             // 窗框
-            ctx.strokeStyle = '#8B4513';
+            ctx.strokeStyle = '#5D6D7E';
             ctx.lineWidth = 2;
-            ctx.strokeRect(wx, buildingY + 15, windowWidth, windowHeight);
+            ctx.strokeRect(wx, buildingY + 20, windowSize, windowSize);
         }
 
-        // 门
+        // 门 - 棕色
         ctx.fillStyle = '#8B4513';
-        const doorWidth = 30;
-        const doorHeight = 50;
-        ctx.fillRect(buildingX + buildingWidth / 2 - doorWidth / 2, buildingY + buildingHeight - doorHeight, doorWidth, doorHeight);
+        const doorWidth = 28;
+        const doorHeight = 40;
+        this.roundRect(ctx, buildingX + buildingWidth / 2 - doorWidth / 2, buildingY + buildingHeight - doorHeight - 5, doorWidth, doorHeight, 3);
+
+        // 门把手
+        ctx.fillStyle = '#F4D03F';
+        ctx.beginPath();
+        ctx.arc(buildingX + buildingWidth / 2 + 5, buildingY + buildingHeight - 25, 3, 0, Math.PI * 2);
+        ctx.fill();
 
         // === 服务区招牌 ===
-        const signWidth = serviceWidth - 30;
-        const signHeight = 35;
-        const signX = serviceX + 15;
-        const signY = baseY - 15;
+        const signWidth = serviceWidth - 25;
+        const signHeight = 30;
+        const signX = serviceX + 12;
+        const signY = baseY;
 
-        // 招牌背景
-        ctx.fillStyle = '#006400';
-        ctx.fillRect(signX, signY, signWidth, signHeight);
+        // 招牌背景 - 绿色
+        ctx.fillStyle = '#27AE60';
+        this.roundRect(ctx, signX, signY, signWidth, signHeight, 5);
 
-        // 招牌边框
+        // 招牌边框 - 白色
         ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(signX, signY, signWidth, signHeight);
+        ctx.lineWidth = 2;
+        this.roundRect(ctx, signX, signY, signWidth, signHeight, 5);
 
         // 招牌文字 - 显示真实服务区名称
         ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 16px Microsoft YaHei';
+        ctx.font = 'bold 14px Microsoft YaHei';
         ctx.textAlign = 'center';
-        ctx.fillText(this.state.serviceArea.desc, signX + signWidth / 2, signY + 24);
+        ctx.fillText(this.state.serviceArea.desc, signX + signWidth / 2, signY + 20);
 
         // 加油图标
-        ctx.font = '20px Arial';
-        ctx.fillText('⛽', signX + signWidth / 2, buildingY + buildingHeight + 20);
-
-        // 提示文字
-        ctx.font = '12px Microsoft YaHei';
-        ctx.fillStyle = '#FFD700';
-        ctx.fillText('右车道答题加油', signX + signWidth / 2, buildingY + buildingHeight + 40);
+        ctx.font = '16px Arial';
+        ctx.fillText('⛽', signX + signWidth / 2 - 45, signY + 22);
 
         ctx.textAlign = 'left';
 
-        // === 入口道路 ===
-        ctx.fillStyle = '#555555';
-        ctx.beginPath();
-        ctx.moveTo(this.road.roadRight, baseY + 160);
-        ctx.lineTo(serviceX, baseY + 170);
-        ctx.lineTo(serviceX, baseY + 190);
-        ctx.lineTo(this.road.roadRight, baseY + 180);
-        ctx.closePath();
-        ctx.fill();
+        // 提示文字
+        ctx.font = '11px Microsoft YaHei';
+        ctx.fillStyle = '#F4D03F';
+        ctx.fillText('→ 右车道答题加油', signX, buildingY + buildingHeight + 12);
 
-        // 入口箭头
-        ctx.fillStyle = '#FFFF00';
+        // === 入口道路 ===
+        ctx.fillStyle = '#5D6D7E';
         ctx.beginPath();
-        ctx.moveTo(this.road.roadRight - 5, baseY + 170);
-        ctx.lineTo(this.road.roadRight - 20, baseY + 165);
-        ctx.lineTo(this.road.roadRight - 20, baseY + 175);
+        ctx.moveTo(this.road.roadRight, baseY + 170);
+        ctx.lineTo(serviceX + 10, baseY + 180);
+        ctx.lineTo(serviceX + 10, baseY + 195);
+        ctx.lineTo(this.road.roadRight, baseY + 180);
         ctx.closePath();
         ctx.fill();
     },
@@ -868,48 +988,61 @@ const Game = {
         // 不绘制岔道图形，选择面板会自动弹出
     },
 
-    // 绘制玩家车辆（俯视图）
+    // 绘制玩家车辆（俯视图，更精致）
     drawPlayerCar() {
         const ctx = this.ctx;
         const carData = CARS_DATA[this.state.currentCar];
         const color = carData ? carData.color : '#808080';
 
-        const w = 50, h = 80;
+        const w = 50, h = 75;
         const x = this.state.playerX - w/2;
         const y = this.state.playerY - h/2;
 
-        // 车身
+        // 阴影
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.fillRect(x + 4, y + 4, w, h);
+
+        // 车身 - 带圆角
         ctx.fillStyle = color;
-        ctx.fillRect(x, y, w, h);
+        this.roundRect(ctx, x, y, w, h, 6);
 
         // 车顶（稍小）
-        ctx.fillStyle = this.darkenColor(color, 20);
-        ctx.fillRect(x + 8, y + 15, w - 16, h - 30);
+        const roofColor = this.darkenColor(color, 15);
+        ctx.fillStyle = roofColor;
+        this.roundRect(ctx, x + 6, y + 18, w - 12, h - 30, 4);
 
-        // 车窗
-        ctx.fillStyle = '#87CEEB';
-        ctx.fillRect(x + 10, y + 5, w - 20, 20);
-        ctx.fillRect(x + 10, y + h - 25, w - 20, 20);
+        // 前挡风玻璃（深色）
+        ctx.fillStyle = '#2C3E50';
+        ctx.fillRect(x + 8, y + 5, w - 16, 12);
 
-        // 车灯（前）
-        ctx.fillStyle = '#FFFF00';
-        ctx.fillRect(x + 5, y, 8, 5);
-        ctx.fillRect(x + w - 13, y, 8, 5);
+        // 后挡风玻璃（深色）
+        ctx.fillRect(x + 8, y + h - 17, w - 16, 12);
 
-        // 车灯（后）
-        ctx.fillStyle = '#FF0000';
-        ctx.fillRect(x + 5, y + h - 5, 8, 5);
-        ctx.fillRect(x + w - 13, y + h - 5, 8, 5);
+        // 车窗边框
+        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x + 8, y + 5, w - 16, 12);
+        ctx.strokeRect(x + 8, y + h - 17, w - 16, 12);
+
+        // 前车灯（黄色）
+        ctx.fillStyle = '#FFD700';
+        ctx.fillRect(x + 4, y + 1, 10, 4);
+        ctx.fillRect(x + w - 14, y + 1, 10, 4);
+
+        // 后车灯（红色）
+        ctx.fillStyle = '#E74C3C';
+        ctx.fillRect(x + 4, y + h - 5, 10, 4);
+        ctx.fillRect(x + w - 14, y + h - 5, 10, 4);
 
         // 轮胎
-        ctx.fillStyle = '#333333';
-        ctx.fillRect(x - 5, y + 10, 8, 15);
-        ctx.fillRect(x + w - 3, y + 10, 8, 15);
-        ctx.fillRect(x - 5, y + h - 25, 8, 15);
-        ctx.fillRect(x + w - 3, y + h - 25, 8, 15);
+        ctx.fillStyle = '#1a1a1a';
+        ctx.fillRect(x - 3, y + 10, 5, 14);
+        ctx.fillRect(x + w - 2, y + 10, 5, 14);
+        ctx.fillRect(x - 3, y + h - 24, 5, 14);
+        ctx.fillRect(x + w - 2, y + h - 24, 5, 14);
     },
 
-    // 绘制NPC车辆（俯视图）
+    // 绘制NPC车辆（俯视图，更精致）
     drawNPCCars() {
         const ctx = this.ctx;
 
@@ -919,24 +1052,51 @@ const Game = {
             const x = npc.x - w/2;
             const y = npc.y - h/2;
 
+            // 阴影
+            ctx.fillStyle = 'rgba(0,0,0,0.25)';
+            ctx.fillRect(x + 3, y + 3, w, h);
+
             // 车身
             ctx.fillStyle = npc.color;
-            ctx.fillRect(x, y, w, h);
+            this.roundRect(ctx, x, y, w, h, 5);
 
             // 车顶
-            ctx.fillStyle = this.darkenColor(npc.color, 20);
-            ctx.fillRect(x + 6, y + 12, w - 12, h - 24);
+            ctx.fillStyle = this.darkenColor(npc.color, 15);
+            this.roundRect(ctx, x + 5, y + 10, w - 10, h - 20, 3);
 
-            // 车窗
-            ctx.fillStyle = '#87CEEB';
-            ctx.fillRect(x + 8, y + 4, w - 16, 16);
-            ctx.fillRect(x + 8, y + h - 20, w - 16, 16);
+            // 挡风玻璃
+            ctx.fillStyle = '#2C3E50';
+            ctx.fillRect(x + 7, y + 3, w - 14, 10);
+            ctx.fillRect(x + 7, y + h - 13, w - 14, 10);
 
             // 后车灯（红色，朝向玩家）
-            ctx.fillStyle = '#FF0000';
-            ctx.fillRect(x + 4, y + h - 4, 6, 4);
-            ctx.fillRect(x + w - 10, y + h - 4, 6, 4);
+            ctx.fillStyle = '#E74C3C';
+            ctx.fillRect(x + 3, y + h - 4, 8, 3);
+            ctx.fillRect(x + w - 11, y + h - 4, 8, 3);
+
+            // 轮胎
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(x - 2, y + 8, 4, 12);
+            ctx.fillRect(x + w - 2, y + 8, 4, 12);
+            ctx.fillRect(x - 2, y + h - 20, 4, 12);
+            ctx.fillRect(x + w - 2, y + h - 20, 4, 12);
         });
+    },
+
+    // 圆角矩形辅助函数
+    roundRect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+        ctx.fill();
     },
 
     // 颜色变暗
@@ -948,31 +1108,52 @@ const Game = {
         return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
     },
 
-    // 绘制天气效果
+    // 绘制天气效果 - 更美观
     drawWeatherEffect() {
         const ctx = this.ctx;
 
         if (this.state.weather === '雨') {
-            ctx.fillStyle = 'rgba(100, 100, 120, 0.3)';
+            // 雨天 - 整体蒙版
+            ctx.fillStyle = 'rgba(100, 110, 130, 0.25)';
             ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-            ctx.strokeStyle = '#AAA';
-            ctx.lineWidth = 1;
-            for (let i = 0; i < 30; i++) {
-                const rx = Math.random() * this.canvas.width;
-                const ry = Math.random() * this.canvas.height;
+            // 雨滴
+            ctx.strokeStyle = 'rgba(180, 190, 210, 0.6)';
+            ctx.lineWidth = 1.5;
+            for (let i = 0; i < 40; i++) {
+                const rx = (i * 73 + this.state.backgroundOffset * 0.3) % this.canvas.width;
+                const ry = (i * 41 + this.state.backgroundOffset * 0.8) % this.canvas.height;
                 ctx.beginPath();
                 ctx.moveTo(rx, ry);
-                ctx.lineTo(rx + 3, ry + 12);
+                ctx.lineTo(rx - 2, ry + 15);
                 ctx.stroke();
             }
-        } else if (this.state.weather === '雪') {
-            ctx.fillStyle = '#FFF';
-            for (let i = 0; i < 20; i++) {
-                const sx = Math.random() * this.canvas.width;
-                const sy = Math.random() * this.canvas.height;
-                ctx.fillRect(sx, sy, 3, 3);
+
+            // 雨滴击打水花
+            ctx.fillStyle = 'rgba(180, 190, 210, 0.4)';
+            for (let i = 0; i < 15; i++) {
+                const sx = (i * 97 + this.state.backgroundOffset * 0.2) % this.canvas.width;
+                const sy = (i * 67 + this.state.backgroundOffset * 0.5) % this.canvas.height;
+                ctx.beginPath();
+                ctx.arc(sx, sy, 3, 0, Math.PI * 2);
+                ctx.fill();
             }
+
+        } else if (this.state.weather === '雪') {
+            // 雪花
+            ctx.fillStyle = '#FFFFFF';
+            for (let i = 0; i < 50; i++) {
+                const sx = (i * 59 + this.state.backgroundOffset * 0.1) % this.canvas.width;
+                const sy = (i * 31 + this.state.backgroundOffset * 0.3) % this.canvas.height;
+                const size = (i % 3) + 2;
+                ctx.beginPath();
+                ctx.arc(sx, sy, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 地面积雪效果
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.fillRect(0, this.canvas.height - 30, this.canvas.width, 30);
         }
     },
 
