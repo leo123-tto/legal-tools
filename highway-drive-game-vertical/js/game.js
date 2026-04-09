@@ -388,17 +388,18 @@ const Game = {
         const fuelUsed = this.state.speed * 0.04 / this.state.consumption;  // 油耗加快4倍
         this.state.fuel = Math.max(0, this.state.fuel - fuelUsed);
 
-        // 时间变换系统：每200公里变换一次时段
+        // 时间变换系统：每100公里变换一次时段（缩短距离）
         const distanceKm = Math.floor(this.state.distance);
-        const timeCycle = Math.floor(distanceKm / 200);
+        const timeCycle = Math.floor(distanceKm / 100);
         const timeSlots = ['清晨', '上午', '中午', '下午', '黄昏', '夜晚'];
         const newTimeOfDay = timeSlots[timeCycle % timeSlots.length];
         if (this.state.timeOfDay !== newTimeOfDay) {
             this.state.timeOfDay = newTimeOfDay;
+            this.showTimeChange(newTimeOfDay);
         }
 
-        // 天气变换系统：每300公里变换一次天气，频率较慢
-        if (distanceKm > 0 && distanceKm % 300 === 0 && this.state.lastWeatherDistance !== distanceKm) {
+        // 天气变换系统：每150公里变换一次天气（缩短距离）
+        if (distanceKm > 0 && distanceKm % 150 === 0 && this.state.lastWeatherDistance !== distanceKm) {
             this.state.lastWeatherDistance = distanceKm;
             this.updateWeather();
         }
@@ -656,14 +657,15 @@ const Game = {
 
                 // 碰撞惩罚：扣10分，扣5升油，给玩家一个无敌时间
                 if (!this.state.collisionCooldown || this.state.collisionCooldown <= 0) {
+                    // 先播放音效，再显示提示
+                    AudioManager.playCollision();
+
                     this.state.score = Math.max(0, this.state.score - 10);
                     this.state.fuel = Math.max(0, this.state.fuel - 5);
                     this.state.collisionCooldown = 120; // 2秒无敌时间
 
                     // 碰撞闪红提示
                     this.showCollisionWarning();
-
-                    AudioManager.playCollision();
                 }
                 return;
             }
@@ -679,24 +681,71 @@ const Game = {
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(255, 0, 0, 0.8);
+            background: rgba(255, 0, 0, 0.85);
             color: white;
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-size: 18px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
             font-weight: bold;
             z-index: 200;
-            animation: fadeOut 1s forwards;
+            animation: fadeOut 0.8s forwards;
             pointer-events: none;
         `;
         warning.textContent = '发生碰撞！-10分 -5升油';
         document.body.appendChild(warning);
 
-        setTimeout(() => warning.remove(), 1000);
+        setTimeout(() => warning.remove(), 800);
+    },
+
+    // 显示时间变化提示
+    showTimeChange(time) {
+        const timeNames = { '清晨': '🌅', '上午': '☀️', '中午': '🌞', '下午': '⛅', '黄昏': '🌇', '夜晚': '🌙' };
+        const hint = document.createElement('div');
+        hint.style.cssText = `
+            position: fixed;
+            top: 35%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            z-index: 180;
+            animation: fadeOut 1.5s forwards;
+            pointer-events: none;
+        `;
+        hint.textContent = timeNames[time] + ' ' + time;
+        document.body.appendChild(hint);
+        setTimeout(() => hint.remove(), 1500);
+    },
+
+    // 显示天气变化提示
+    showWeatherChange(weather) {
+        const weatherIcons = { '晴': '☀️', '阴': '☁️', '雨': '🌧️', '雪': '❄️' };
+        const hint = document.createElement('div');
+        hint.style.cssText = `
+            position: fixed;
+            top: 40%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            z-index: 180;
+            animation: fadeOut 1.5s forwards;
+            pointer-events: none;
+        `;
+        hint.textContent = weatherIcons[weather] + ' ' + weather;
+        document.body.appendChild(hint);
+        setTimeout(() => hint.remove(), 1500);
     },
 
     // 更新天气
     updateWeather() {
+        const oldWeather = this.state.weather;
         const weathers = ['晴', '阴', '雨', '雪'];
         const weights = [0.5, 0.25, 0.2, 0.05];
         let rand = Math.random(), sum = 0;
@@ -706,6 +755,10 @@ const Game = {
                 this.state.weather = weathers[i];
                 break;
             }
+        }
+        // 显示天气变化提示
+        if (this.state.weather !== oldWeather) {
+            this.showWeatherChange(this.state.weather);
         }
     },
 
@@ -803,18 +856,63 @@ const Game = {
         ctx.fillRect(0, 0, this.road.roadLeft, this.canvas.height);
         ctx.fillRect(this.road.roadRight, 0, this.canvas.width - this.road.roadRight, this.canvas.height);
 
-        // 草地纹理（简单的点）
-        ctx.fillStyle = '#2E8B57';
-        for (let i = 0; i < 50; i++) {
-            const gx = Math.random() * this.canvas.width;
-            const gy = Math.random() * this.canvas.height;
-            if (gx < this.road.roadLeft || gx > this.road.roadRight) {
-                ctx.fillRect(gx, gy, 2, 2);
+        // 草地纹理 - 使用固定位置避免闪烁
+        ctx.fillStyle = '#228B22';
+        const grassOffset = Math.floor(this.state.backgroundOffset * 0.5) % 30;
+        for (let i = 0; i < 40; i++) {
+            // 左侧草地
+            const gx1 = (i * 37 + 15) % this.road.roadLeft;
+            const gy1 = ((i * 23 + grassOffset) % this.canvas.height + this.canvas.height) % this.canvas.height;
+            ctx.fillRect(gx1, gy1, 3, 6);
+            ctx.fillRect(gx1 + 8, gy1 + 3, 3, 5);
+
+            // 右侧草地
+            const gx2 = this.road.roadRight + 10 + (i * 31 % (this.canvas.width - this.road.roadRight - 15));
+            const gy2 = ((i * 19 + grassOffset + 10) % this.canvas.height + this.canvas.height) % this.canvas.height;
+            ctx.fillRect(gx2, gy2, 3, 6);
+            ctx.fillRect(gx2 + 8, gy2 + 3, 3, 5);
+        }
+
+        // 路边树木 - 间隔出现
+        const treeOffset = Math.floor(this.state.backgroundOffset * 0.3) % 80;
+        for (let i = 0; i < 6; i++) {
+            // 左侧树
+            const tx = 15 + (i % 2) * 25;
+            const ty = ((i * 120 - treeOffset) % (this.canvas.height + 100)) - 50;
+            if (ty > -30 && ty < this.canvas.height) {
+                // 树干
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(tx + 4, ty + 20, 6, 25);
+                // 树冠
+                ctx.fillStyle = '#228B22';
+                ctx.beginPath();
+                ctx.arc(tx + 7, ty + 15, 12, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#32CD32';
+                ctx.beginPath();
+                ctx.arc(tx + 7, ty + 12, 8, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 右侧树
+            const trx = this.canvas.width - 35 - (i % 2) * 25;
+            const trY = ((i * 120 - treeOffset + 40) % (this.canvas.height + 100)) - 50;
+            if (trY > -30 && trY < this.canvas.height) {
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(trx + 4, trY + 20, 6, 25);
+                ctx.fillStyle = '#228B22';
+                ctx.beginPath();
+                ctx.arc(trx + 7, trY + 15, 12, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#32CD32';
+                ctx.beginPath();
+                ctx.arc(trx + 7, trY + 12, 8, 0, Math.PI * 2);
+                ctx.fill();
             }
         }
 
-        // 道路 - 深灰色沥青
-        ctx.fillStyle = '#404040';
+        // 道路 - 深灰色沥青带质感
+        ctx.fillStyle = '#505050';
         ctx.fillRect(this.road.roadLeft, 0, this.road.roadRight - this.road.roadLeft, this.canvas.height);
 
         // 道路边缘线（黄色实线）
