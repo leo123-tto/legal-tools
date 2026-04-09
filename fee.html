@@ -3,29 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>律师费计算器</title>
+    <title>律师费计算器 - 法律工具集</title>
     <style>
         :root {
-            --bg-primary: #FAFAFA;
-            --bg-secondary: #F5F5F5;
-            --text-primary: #1A1A1A;
-            --text-secondary: #6B6B6B;
-            --text-tertiary: #9B9B9B;
-            --accent: #1E40AF;
-            --accent-hover: #1E3A8A;
-            --accent-light: rgba(30, 64, 175, 0.08);
-            --accent-gradient: linear-gradient(135deg, #1E40AF 0%, #3B5998 100%);
-            --border: #E5E5E5;
-            --focus-ring: rgba(30, 64, 175, 0.2);
-
-            --radius-lg: 24px;
-            --radius-md: 16px;
-            --radius-sm: 12px;
-
-            --shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-            --shadow-hover: 0 12px 48px rgba(0, 0, 0, 0.12);
-            --shadow-button: 0 4px 0 #1E3A8A;
-            --shadow-button-active: 0 2px 0 #1E3A8A;
+            --bg-primary: #F0F1F5;
+            --text-primary: #1A1D2E;
+            --text-secondary: rgba(60, 68, 90, 0.8);
+            --text-tertiary: rgba(100, 110, 135, 0.65);
+            --accent: #4F6AF0;
+            --accent-hover: #3D56D4;
+            --accent-light: rgba(79, 106, 240, 0.08);
+            --accent-gradient: linear-gradient(135deg, #4F6AF0 0%, #9B6FE8 100%);
+            --border: rgba(80, 90, 130, 0.12);
+            --focus-ring: rgba(79, 106, 240, 0.15);
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --radius-sm: 10px;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+            --shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.08);
         }
 
         * {
@@ -37,684 +32,593 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(180deg, #EBF4FF 0%, #FAFAFA 50%, #F0F4F8 100%);
+            background: linear-gradient(180deg, #EDF0F8 0%, #F0F1F5 100%);
             min-height: 100vh;
-            padding: 32px 16px;
+            min-height: 100dvh;
             color: var(--text-primary);
-            line-height: 1.6;
+            line-height: 1.5;
+            overflow-x: hidden;
         }
 
-        /* 背景装饰元素 */
-        body::before {
-            content: '';
-            position: fixed;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background-image:
-                radial-gradient(circle at 20% 30%, rgba(30, 64, 175, 0.06) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(59, 89, 152, 0.04) 0%, transparent 50%),
-                radial-gradient(circle at 40% 80%, rgba(30, 64, 175, 0.03) 0%, transparent 40%);
-            pointer-events: none;
-            z-index: -1;
-        }
-
-        .container {
-            max-width: 480px;
+        .page {
+            max-width: 420px;
             margin: 0 auto;
+            padding: 16px 16px env(safe-area-inset-bottom, 20px);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-height: 100vh;
+            min-height: 100dvh;
         }
 
-        /* 头部 */
-        .header {
-            text-align: center;
-            margin-bottom: 28px;
-            position: relative;
-        }
-
-        .header-icon {
-            font-size: 44px;
-            margin-bottom: 12px;
-            display: block;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-        }
-
-        .header h1 {
-            font-size: 26px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            color: var(--text-primary);
-            margin-bottom: 6px;
-        }
-
-        .header p {
-            font-size: 13px;
-            color: var(--text-secondary);
-            font-weight: 500;
+        /* Nav */
+        .nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
         .back-link {
-            position: absolute;
-            top: -10px;
-            left: 0;
             font-size: 13px;
             color: var(--accent);
             text-decoration: none;
-            padding: 8px 12px;
-            background: rgba(30, 64, 175, 0.08);
+            padding: 6px 12px;
+            background: rgba(79, 106, 240, 0.06);
             border-radius: 20px;
-            transition: all 0.2s ease;
-            display: inline-block;
-            z-index: 10;
-        }
-
-        .back-link:hover {
-            background: rgba(30, 64, 175, 0.15);
-            transform: translateX(-2px);
+            transition: all 0.2s;
+            font-weight: 500;
         }
 
         .back-link:active {
-            transform: translateX(0);
-            background: rgba(30, 64, 175, 0.2);
+            background: rgba(79, 106, 240, 0.15);
+            transform: scale(0.96);
         }
 
-        /* 主卡片 */
-        .card {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(20px);
-            border-radius: var(--radius-lg);
-            padding: 28px 24px;
-            border: 1px solid rgba(229, 229, 229, 0.5);
-            box-shadow: var(--shadow);
-        }
-
-        /* 表单分组 */
-        .form-section {
-            margin-bottom: 28px;
-            padding-bottom: 28px;
-            border-bottom: 1px solid rgba(229, 229, 229, 0.6);
-        }
-
-        .form-section:last-of-type {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-
-        .section-label {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--text-tertiary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .section-label::before {
-            content: '';
-            width: 4px;
-            height: 16px;
-            background: var(--accent-gradient);
-            border-radius: 2px;
-        }
-
-        /* 选项按钮组 */
-        .options-grid {
-            display: grid;
-            gap: 12px;
-        }
-
-        .options-grid.grid-2 {
-            grid-template-columns: 1fr 1fr;
-        }
-
-        .options-grid.grid-3 {
-            grid-template-columns: repeat(3, 1fr);
-        }
-
-        .option-btn {
-            padding: 18px 14px;
-            background: linear-gradient(145deg, #FFFFFF 0%, #F5F5F5 100%);
-            border: 1px solid #E0E0E0;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            transition: all 0.12s ease;
-            text-align: center;
+        .nav-title {
             font-size: 15px;
-            font-weight: 600;
+            font-weight: 700;
             color: var(--text-primary);
-            position: relative;
-            box-shadow: 0 4px 0 #D0D0D0;
         }
 
-        .option-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 2px 0 #D0D0D0;
-        }
+        .nav-spacer { width: 72px; }
 
-        .option-btn.active {
-            border-color: var(--accent);
-            background: var(--accent-light);
-            color: var(--accent);
-            box-shadow: 0 4px 0 rgba(30, 64, 175, 0.3);
-        }
-
-        .option-btn.active:active {
-            box-shadow: 0 2px 0 rgba(30, 64, 175, 0.3);
-        }
-
-        .option-btn .icon {
-            font-size: 24px;
-            margin-bottom: 8px;
-            display: block;
-        }
-
-        .option-btn .desc {
-            font-size: 11px;
-            color: var(--text-tertiary);
-            margin-top: 4px;
-            font-weight: 400;
-        }
-
-        .option-btn.active .desc {
-            color: var(--accent);
-        }
-
-        /* 输入框 */
-        .input-wrapper {
-            position: relative;
-        }
-
-        .input-field {
-            width: 100%;
-            padding: 18px 18px;
-            padding-right: 70px;
-            font-size: 20px;
-            font-weight: 600;
-            border: 2px solid #E0E0E0;
-            border-radius: var(--radius-md);
-            outline: none;
-            transition: all 0.2s ease;
-            background: white;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-            -moz-appearance: textfield;
-        }
-
-        .input-field::-webkit-outer-spin-button,
-        .input-field::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-
-        .input-field:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 4px var(--focus-ring), 0 2px 12px rgba(30, 64, 175, 0.1);
-        }
-
-        .input-field::placeholder {
-            color: var(--text-tertiary);
-        }
-
-        .input-suffix {
-            position: absolute;
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 15px;
-            color: var(--text-secondary);
-            font-weight: 600;
-        }
-
-        /* 结果区域 */
-        .result-section {
-            margin-top: 28px;
-            padding-top: 20px;
-            display: none;
-            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .result-section.show {
-            display: block;
-        }
-
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(24px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .result-card {
-            background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
-            border-radius: var(--radius-md);
-            padding: 18px 20px;
+        /* Header */
+        .header {
             text-align: center;
-            border: 1px solid rgba(30, 64, 175, 0.15);
-            box-shadow: 0 4px 16px rgba(30, 64, 175, 0.08);
+            padding: 4px 0 2px;
         }
 
-        /* 一口价卡片 */
-        #fixedResultCard .result-label {
-            margin-bottom: 10px;
-        }
-
-        /* 田字形布局 */
-        .risk-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0;
-            align-items: center;
-            max-width: 280px;
-            margin: 12px auto 0;
-            border: 2px solid rgba(30, 64, 175, 0.3);
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(30, 64, 175, 0.06);
-        }
-
-        .risk-label {
-            font-size: 14px;
-            color: var(--text-secondary);
-            text-align: center;
-            font-weight: 600;
-            padding: 12px 8px;
-            background: rgba(255, 255, 255, 0.7);
-            border-bottom: 1px solid rgba(30, 64, 175, 0.12);
-        }
-
-        .risk-value {
-            font-size: 26px;
+        .header h1 {
+            font-size: 22px;
             font-weight: 800;
-            color: var(--accent);
-            text-align: center;
-            line-height: 1.2;
-            padding: 12px 8px;
-            background: white;
-            border-bottom: 1px solid rgba(30, 64, 175, 0.12);
-            letter-spacing: -0.5px;
-        }
-
-        .risk-label.last {
-            border-bottom: none;
-        }
-
-        .risk-value.last {
-            border-bottom: none;
-        }
-
-        .result-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .result-value {
-            font-size: 36px;
-            font-weight: 800;
-            color: var(--accent);
-            letter-spacing: -1px;
-            line-height: 1.2;
-        }
-
-        .result-range {
-            font-size: 12px;
-            color: var(--text-tertiary);
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid rgba(30, 64, 175, 0.1);
-        }
-
-        /* 详情列表 */
-        .detail-list {
-            background: var(--bg-secondary);
-            border-radius: var(--radius-md);
-            margin-top: 18px;
-            overflow: hidden;
-            border: 1px solid var(--border);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        }
-
-        .detail-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 14px 16px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .detail-item:last-child {
-            border-bottom: none;
-        }
-
-        .detail-label {
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
-
-        .detail-value {
-            font-size: 16px;
-            font-weight: 700;
             color: var(--text-primary);
             letter-spacing: -0.3px;
         }
 
-        .detail-value.highlight {
-            color: var(--accent);
-            font-weight: 800;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        /* 浮动提示 */
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: rgba(26, 26, 26, 0.95);
-            color: white;
-            padding: 14px 24px;
-            border-radius: var(--radius-sm);
-            font-size: 14px;
+        .header p {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-top: 4px;
             font-weight: 500;
-            opacity: 0;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: 1000;
-            backdrop-filter: blur(10px);
         }
 
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
+        /* Segment control */
+        .segment {
+            display: flex;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: var(--radius-sm);
+            padding: 3px;
         }
 
-        /* 响应式 */
-        @media (max-width: 480px) {
-            body { padding: 16px 12px; }
-            .card { padding: 20px 16px; }
-            .header h1 { font-size: 22px; }
-            .header-icon { font-size: 36px; }
-            .result-value { font-size: 32px; }
-            .options-grid.grid-3 { gap: 8px; }
-            .option-btn { padding: 14px 10px; font-size: 14px; }
-            .option-btn .icon { font-size: 20px; }
+        .seg-btn {
+            flex: 1;
+            padding: 9px 8px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: center;
+        }
+
+        .seg-btn.active {
+            background: white;
+            color: var(--accent);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .seg-btn:active { transform: scale(0.97); }
+
+        /* Main card */
+        .card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(80, 90, 130, 0.06);
+        }
+
+        /* Field */
+        .field {
+            margin-bottom: 16px;
+        }
+
+        .field:last-child { margin-bottom: 0; }
+
+        .field-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .field-label::before {
+            content: '';
+            width: 3px;
+            height: 13px;
+            background: var(--accent-gradient);
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        /* Amount input */
+        .amount-row {
+            display: flex;
+            align-items: stretch;
+            border: 2px solid rgba(80, 90, 130, 0.12);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: rgba(240, 242, 248, 0.8);
+        }
+
+        .amount-row:focus-within {
+            border-color: var(--accent);
+            background: white;
+            box-shadow: 0 0 0 3px var(--focus-ring);
+        }
+
+        .amount-input {
+            flex: 1;
+            padding: 14px 12px;
+            font-size: 22px;
+            font-weight: 700;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: var(--text-primary);
+            min-width: 0;
+            -moz-appearance: textfield;
+        }
+
+        .amount-input::-webkit-outer-spin-button,
+        .amount-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+        .amount-suffix {
+            padding: 14px 14px 14px 4px;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            align-self: center;
+            white-space: nowrap;
+        }
+
+        /* Difficulty selector */
+        .difficulty-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .diff-btn {
+            flex: 1;
+            padding: 10px 4px;
+            border: 2px solid rgba(80, 90, 130, 0.12);
+            background: rgba(240, 242, 248, 0.8);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.18s;
+            text-align: center;
+        }
+
+        .diff-btn.active {
+            border-color: var(--accent);
+            background: var(--accent-light);
+            color: var(--accent);
+        }
+
+        .diff-btn:active { transform: scale(0.96); }
+
+        /* Result card */
+        .result-card {
+            background: var(--accent-gradient);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: 0 6px 24px rgba(79, 106, 240, 0.18);
+            display: none;
+        }
+
+        .result-card.visible { display: block; }
+
+        .result-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(255,255,255,0.65);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .result-main {
+            font-size: 30px;
+            font-weight: 800;
+            color: white;
+            letter-spacing: -0.5px;
+            margin-bottom: 2px;
+        }
+
+        .result-sub {
+            font-size: 12px;
+            color: rgba(255,255,255,0.65);
+            margin-bottom: 16px;
+        }
+
+        /* Grid for risk mode */
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .result-grid-item {
+            background: rgba(255,255,255,0.12);
+            border-radius: var(--radius-sm);
+            padding: 12px 10px;
+        }
+
+        .grid-item-label {
+            font-size: 10px;
+            color: rgba(255,255,255,0.6);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .grid-item-value {
+            font-size: 16px;
+            font-weight: 800;
+            color: white;
+        }
+
+        /* Detail list */
+        .detail-list {
+            border-top: 1px solid rgba(255,255,255,0.15);
+            padding-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .detail-key {
+            font-size: 12px;
+            color: rgba(255,255,255,0.65);
+            font-weight: 500;
+        }
+
+        .detail-val {
+            font-size: 13px;
+            color: white;
+            font-weight: 700;
+        }
+
+        /* Range row for fixed mode */
+        .range-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .range-item {
+            flex: 1;
+            background: rgba(255,255,255,0.12);
+            border-radius: var(--radius-sm);
+            padding: 10px;
+            text-align: center;
+        }
+
+        .range-item-label {
+            font-size: 10px;
+            color: rgba(255,255,255,0.6);
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .range-item-value {
+            font-size: 14px;
+            font-weight: 800;
+            color: white;
+        }
+
+        /* Empty state */
+        .empty-hint {
+            text-align: center;
+            padding: 20px 0 4px;
+            font-size: 13px;
+            color: var(--text-tertiary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .empty-hint .hint-icon {
+            font-size: 28px;
+            opacity: 0.5;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: auto;
+            padding-top: 8px;
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-tertiary);
+            line-height: 1.6;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- 头部 -->
-        <div class="header">
-            <a href="index.html" class="back-link">← 返回主页</a>
-            <span class="header-icon">⚖️</span>
-            <h1>律师费报价方案</h1>
-            <p>江苏漫修（无锡）律师事务所 · 刘成律师</p>
+<div class="page">
+
+    <!-- Nav -->
+    <nav class="nav">
+        <a href="index.html" class="back-link">← 返回</a>
+        <span class="nav-title">费用计算</span>
+        <span class="nav-spacer"></span>
+    </nav>
+
+    <!-- Header -->
+    <div class="header">
+        <h1>律师费报价方案</h1>
+        <p>江苏漫修（无锡）律师事务所 · 刘成律师</p>
+    </div>
+
+    <!-- Mode switch -->
+    <div class="segment" role="tablist">
+        <button class="seg-btn active" id="tab-fixed" role="tab" aria-selected="true" onclick="switchMode('fixed')">一口价</button>
+        <button class="seg-btn" id="tab-risk" role="tab" aria-selected="false" onclick="switchMode('risk')">基础 + 风险</button>
+    </div>
+
+    <!-- Input card -->
+    <div class="card">
+        <div class="field">
+            <div class="field-label">案件标的额</div>
+            <div class="amount-row">
+                <input
+                    id="amountInput"
+                    class="amount-input"
+                    type="number"
+                    inputmode="decimal"
+                    placeholder="0"
+                    min="0"
+                    autocomplete="off"
+                    oninput="onAmountInput()"
+                />
+                <span class="amount-suffix">万元</span>
+            </div>
         </div>
 
-        <!-- 主卡片 -->
-        <div class="card">
-            <!-- 收费模式 -->
-            <div class="form-section">
-                <div class="section-label">收费模式</div>
-                <div class="options-grid grid-2">
-                    <button class="option-btn mode-btn active" onclick="selectMode('fixed', this)">
-                        <span class="icon">💰</span>
-                        <span>一口价</span>
-                        <span class="desc">固定收费</span>
-                    </button>
-                    <button class="option-btn mode-btn" onclick="selectMode('risk', this)">
-                        <span class="icon">📊</span>
-                        <span>基础 + 风险</span>
-                        <span class="desc">前期 + 提成</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- 案件标的 -->
-            <div class="form-section">
-                <div class="section-label">案件标的</div>
-                <div class="input-wrapper">
-                    <input type="number" class="input-field" id="amount" placeholder="0" min="0" step="0.5" oninput="autoCalculate()">
-                    <span class="input-suffix">万元</span>
-                </div>
-            </div>
-
-            <!-- 执行难度（基础 + 风险模式显示） -->
-            <div class="form-section" id="difficultySection" style="display: none;">
-                <div class="section-label">执行难度</div>
-                <div class="options-grid grid-3">
-                    <button class="option-btn difficulty-btn" onclick="selectDifficulty('simple', this)">
-                        <span class="icon">😊</span>
-                        <span>简单</span>
-                    </button>
-                    <button class="option-btn difficulty-btn active" onclick="selectDifficulty('normal', this)">
-                        <span class="icon">😐</span>
-                        <span>一般</span>
-                    </button>
-                    <button class="option-btn difficulty-btn" onclick="selectDifficulty('hard', this)">
-                        <span class="icon">😰</span>
-                        <span>困难</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- 结果区域 -->
-            <div class="result-section" id="resultSection">
-                <!-- 一口价结果卡片 -->
-                <div class="result-card" id="fixedResultCard">
-                    <div class="result-label">📌 建议报价（一口价）</div>
-                    <div class="result-value" id="fixedPrice">--</div>
-                    <div class="result-range" id="fixedRange">参考区间：--</div>
-                </div>
-
-                <!-- 基础 + 风险结果卡片 -->
-                <div class="result-card hidden" id="riskResultCard">
-                    <div class="result-label" style="margin-bottom: 10px;">📊 报价方案</div>
-                    <div class="risk-grid">
-                        <div class="risk-label">基础律师费</div>
-                        <div class="risk-value" id="riskBasePrice">--</div>
-                        <div class="risk-label last">风险代理比例</div>
-                        <div class="risk-value last" id="riskRateDisplay">--</div>
-                    </div>
-                </div>
-
-                <!-- 详情列表（仅基础 + 风险模式显示） -->
-                <div class="detail-list hidden" id="resultDetails">
-                    <div class="detail-item">
-                        <span class="detail-label">预计执行到位</span>
-                        <span class="detail-value" id="detailExpect">--</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">基础律师费</span>
-                        <span class="detail-value highlight" id="detailBase">--</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">风险代理费</span>
-                        <span class="detail-value highlight" id="detailRisk">--</span>
-                    </div>
-                    <div class="detail-item" style="background: rgba(13, 148, 136, 0.05);">
-                        <span class="detail-label">💰 预计律师费</span>
-                        <span class="detail-value" id="detailTotal">--</span>
-                    </div>
-                </div>
+        <div class="field" id="difficultyField" style="display:none; margin-bottom:0;">
+            <div class="field-label">案件难度</div>
+            <div class="difficulty-group">
+                <button class="diff-btn active" id="diff-simple" onclick="switchDiff('simple')">简单</button>
+                <button class="diff-btn" id="diff-normal" onclick="switchDiff('normal')">一般</button>
+                <button class="diff-btn" id="diff-hard" onclick="switchDiff('hard')">困难</button>
             </div>
         </div>
     </div>
 
-    <!-- 提示框 -->
-    <div class="toast" id="toast"></div>
+    <!-- Result card -->
+    <div class="result-card" id="resultCard">
+        <!-- populated by JS -->
+    </div>
 
-    <script>
-        // 状态
-        let currentMode = 'fixed';
-        let currentDifficulty = 'normal';
-        let currentRiskRate = 10;
-        let currentExpectRate = 60;
+    <!-- Empty hint -->
+    <div class="empty-hint" id="emptyHint">
+        <span class="hint-hint-icon hint-icon">💼</span>
+        <span>输入标的额，自动生成报价方案</span>
+    </div>
 
-        // 选择模式
-        function selectMode(mode, btn) {
-            currentMode = mode;
+    <!-- Footer -->
+    <footer class="footer">
+        江苏漫修（无锡）律师事务所&nbsp;&nbsp;刘成律师<br>
+        <span style="opacity:0.6;">仅供参考，实际收费以委托合同为准</span>
+    </footer>
 
-            // 清除所有模式按钮的激活状态
-            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-            // 添加当前按钮的激活状态
-            btn.classList.add('active');
+</div>
 
-            // 显示/隐藏难度区域
-            const difficultySection = document.getElementById('difficultySection');
+<script>
+    // ── Business logic ──────────────────────────────────────────────
+    function calculateFixed(amount) {
+        if (amount <= 0) return 0;
+        if (amount <= 1) return 1;
+        if (amount <= 20) return Math.max(1, amount * 0.10);
+        if (amount <= 50) return 2 + (amount - 20) * 0.05;
+        if (amount <= 100) return 3.5 + (amount - 50) * 0.03;
+        if (amount <= 250) return 5 + (amount - 100) * 0.04;
+        if (amount <= 500) return 11 + (amount - 250) * 0.028;
+        if (amount <= 1000) return 18 + (amount - 500) * 0.02;
+        return 28 + (amount - 1000) * 0.015;
+    }
 
-            if (mode === 'risk') {
-                difficultySection.style.display = 'block';
-                // 添加展开动画
-                difficultySection.animate([
-                    { opacity: 0, transform: 'translateY(-10px)' },
-                    { opacity: 1, transform: 'translateY(0)' }
-                ], { duration: 300, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
-            } else {
-                difficultySection.style.display = 'none';
-            }
+    function calculateRiskTotal(amount) {
+        return calculateFixed(amount) * 1.8;
+    }
 
-            // 隐藏详情列表，然后根据当前输入重新计算
-            document.getElementById('resultDetails').classList.add('hidden');
-            autoCalculate();
+    function formatMoney(num) {
+        const rounded = Math.round(num * 2) / 2;
+        if (rounded >= 10000) return (rounded / 10000).toFixed(2) + ' 亿元';
+        else if (rounded >= 100) return Math.round(rounded) + ' 万元';
+        else if (rounded >= 1) return rounded.toFixed(1) + ' 万元';
+        else return rounded.toFixed(2) + ' 万元';
+    }
+
+    const DIFFICULTY = {
+        simple: { riskRate: 7,  expectRate: 90, ratio: [30, 70], label: '简单案件' },
+        normal: { riskRate: 10, expectRate: 60, ratio: [40, 60], label: '一般案件' },
+        hard:   { riskRate: 15, expectRate: 20, ratio: [50, 50], label: '困难案件' },
+    };
+
+    // ── State ────────────────────────────────────────────────────────
+    let mode = 'fixed';      // 'fixed' | 'risk'
+    let difficulty = 'simple';
+    let debounceTimer = null;
+
+    // ── UI helpers ───────────────────────────────────────────────────
+    function switchMode(m) {
+        mode = m;
+        document.getElementById('tab-fixed').classList.toggle('active', m === 'fixed');
+        document.getElementById('tab-risk').classList.toggle('active', m === 'risk');
+        document.getElementById('tab-fixed').setAttribute('aria-selected', m === 'fixed');
+        document.getElementById('tab-risk').setAttribute('aria-selected', m === 'risk');
+        document.getElementById('difficultyField').style.display = m === 'risk' ? 'block' : 'none';
+        calculate();
+    }
+
+    function switchDiff(d) {
+        difficulty = d;
+        ['simple', 'normal', 'hard'].forEach(k => {
+            document.getElementById('diff-' + k).classList.toggle('active', k === d);
+        });
+        calculate();
+    }
+
+    function onAmountInput() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(calculate, 300);
+    }
+
+    // ── Core calculation + render ────────────────────────────────────
+    function calculate() {
+        const raw = parseFloat(document.getElementById('amountInput').value);
+        const resultCard = document.getElementById('resultCard');
+        const emptyHint  = document.getElementById('emptyHint');
+
+        if (!raw || isNaN(raw) || raw <= 0) {
+            resultCard.classList.remove('visible');
+            emptyHint.style.display = 'flex';
+            return;
         }
 
-        // 自动计算（带防抖）
-        let calcTimer = null;
-        function autoCalculate() {
-            clearTimeout(calcTimer);
-            calcTimer = setTimeout(() => {
-                const amount = parseFloat(document.getElementById('amount').value);
-                if (amount && amount > 0) {
-                    calculate();
-                }
-            }, 300);
+        resultCard.classList.add('visible');
+        emptyHint.style.display = 'none';
+
+        if (mode === 'fixed') {
+            renderFixed(raw);
+        } else {
+            renderRisk(raw);
         }
+    }
 
-        // 选择难度
-        function selectDifficulty(difficulty, btn) {
-            currentDifficulty = difficulty;
+    function renderFixed(amount) {
+        const fee   = calculateFixed(amount);
+        const low   = fee * 0.8;
+        const high  = fee * 1.2;
 
-            // 根据难度自动设置风险代理比例和预计执行到位比例
-            const riskRates = { simple: 7, normal: 10, hard: 15 };
-            const expectRates = { simple: 90, normal: 60, hard: 20 };
-            currentRiskRate = riskRates[difficulty];
-            currentExpectRate = expectRates[difficulty];
+        document.getElementById('resultCard').innerHTML = `
+            <div class="result-label">一口价 · 建议报价</div>
+            <div class="result-main">${formatMoney(fee)}</div>
+            <div class="result-sub">标的额 ${amount} 万元 · 固定收费模式</div>
+            <div class="range-row">
+                <div class="range-item">
+                    <div class="range-item-label">浮动下限 ×0.8</div>
+                    <div class="range-item-value">${formatMoney(low)}</div>
+                </div>
+                <div class="range-item">
+                    <div class="range-item-label">浮动上限 ×1.2</div>
+                    <div class="range-item-value">${formatMoney(high)}</div>
+                </div>
+            </div>
+            <div class="detail-list">
+                <div class="detail-row">
+                    <span class="detail-key">合理区间</span>
+                    <span class="detail-val">${formatMoney(low)} ~ ${formatMoney(high)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-key">计费基准</span>
+                    <span class="detail-val">${amount} 万元标的额</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-key">收费方式</span>
+                    <span class="detail-val">一次性固定收费</span>
+                </div>
+            </div>
+        `;
+    }
 
-            document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+    function renderRisk(amount) {
+        const d = DIFFICULTY[difficulty];
+        const totalExpected = calculateRiskTotal(amount);
 
-            autoCalculate();
-        }
+        const basePercent   = d.ratio[0];                          // base share %
+        const baseFee       = totalExpected * (basePercent / 100);
 
-        // 一口价计算
-        function calculateFixed(amount) {
-            if (amount <= 1) return 1;
-            if (amount <= 20) return Math.max(1, amount * 0.10);
-            if (amount <= 50) return 2 + (amount - 20) * 0.05;
-            if (amount <= 100) return 3.5 + (amount - 50) * 0.03;
-            if (amount <= 250) return 5 + (amount - 100) * 0.04;
-            if (amount <= 500) return 11 + (amount - 250) * 0.028;
-            if (amount <= 1000) return 18 + (amount - 500) * 0.02;
-            return 28 + (amount - 1000) * 0.015;
-        }
+        const expectAmount  = amount * (d.expectRate / 100);
+        const actualRiskFee = expectAmount * (d.riskRate / 100);
 
-        // 基础 + 风险总预期计算
-        function calculateRiskTotal(amount) {
-            return calculateFixed(amount) * 1.8;
-        }
+        const total = baseFee + actualRiskFee;
 
-        // 格式化金额
-        function formatMoney(num) {
-            const rounded = Math.round(num * 2) / 2;
-            if (rounded >= 10000) {
-                return (rounded / 10000).toFixed(2) + ' 亿元';
-            } else if (rounded >= 100) {
-                return Math.round(rounded) + ' 万元';
-            } else if (rounded >= 1) {
-                return rounded.toFixed(1) + ' 万元';
-            } else {
-                return rounded.toFixed(2) + ' 万元';
-            }
-        }
-
-        // 显示提示
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2000);
-        }
-
-        // 计算
-        function calculate() {
-            const amount = parseFloat(document.getElementById('amount').value);
-
-            if (!amount || amount <= 0) {
-                document.getElementById('resultSection').classList.remove('show');
-                return;
-            }
-
-            const fixedResultCard = document.getElementById('fixedResultCard');
-            const riskResultCard = document.getElementById('riskResultCard');
-            const resultDetails = document.getElementById('resultDetails');
-
-            if (currentMode === 'fixed') {
-                // 一口价模式
-                fixedResultCard.classList.remove('hidden');
-                riskResultCard.classList.add('hidden');
-                resultDetails.classList.add('hidden');
-
-                const fee = calculateFixed(amount);
-                const lowFee = Math.max(1, fee * 0.8);
-                const highFee = fee * 1.2;
-
-                document.getElementById('fixedPrice').textContent = formatMoney(fee);
-                document.getElementById('fixedRange').textContent = `参考区间：${formatMoney(lowFee)} ~ ${formatMoney(highFee)}`;
-
-            } else {
-                // 基础 + 风险模式
-                fixedResultCard.classList.add('hidden');
-                riskResultCard.classList.remove('hidden');
-                resultDetails.classList.remove('hidden');
-
-                const totalExpected = calculateRiskTotal(amount);
-
-                // 内部费用分配比例（用于计算基础费和风险费）
-                const ratios = { simple: [30, 70], normal: [40, 60], hard: [50, 50] };
-                const [basePercent, riskPercent] = ratios[currentDifficulty];
-
-                // 基础律师费（按内部比例）
-                const baseFee = totalExpected * (basePercent / 100);
-
-                // 预计执行到位金额（根据难度对应的预计执行比例）
-                const expectAmount = amount * (currentExpectRate / 100);
-
-                // 实际风险代理费 = 执行到位金额 × 风险代理比例
-                const actualRiskFee = expectAmount * (currentRiskRate / 100);
-
-                // 实际总收费 = 基础费 + 实际风险费
-                const actualTotal = baseFee + actualRiskFee;
-
-                // 主卡片显示：基础律师费 + 风险比例
-                document.getElementById('riskBasePrice').textContent = formatMoney(baseFee);
-                document.getElementById('riskRateDisplay').textContent = `${currentRiskRate}%`;
-
-                // 详情列表
-                document.getElementById('detailExpect').textContent = `${formatMoney(expectAmount)}（${currentExpectRate}%）`;
-                document.getElementById('detailBase').textContent = formatMoney(baseFee);
-                document.getElementById('detailRisk').textContent = formatMoney(actualRiskFee);
-                document.getElementById('detailTotal').textContent = formatMoney(actualTotal);
-            }
-
-            document.getElementById('resultSection').classList.add('show');
-        }
-    </script>
+        document.getElementById('resultCard').innerHTML = `
+            <div class="result-label">基础 + 风险 · ${d.label}</div>
+            <div class="result-main">${formatMoney(total)}</div>
+            <div class="result-sub">标的额 ${amount} 万元 · 混合收费模式</div>
+            <div class="result-grid">
+                <div class="result-grid-item">
+                    <div class="grid-item-label">基础服务费</div>
+                    <div class="grid-item-value">${formatMoney(baseFee)}</div>
+                </div>
+                <div class="result-grid-item">
+                    <div class="grid-item-label">风险代理费率</div>
+                    <div class="grid-item-value">${d.riskRate}%</div>
+                </div>
+            </div>
+            <div class="detail-list">
+                <div class="detail-row">
+                    <span class="detail-key">预期回收金额</span>
+                    <span class="detail-val">${formatMoney(expectAmount)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-key">基础服务费（${basePercent}%）</span>
+                    <span class="detail-val">${formatMoney(baseFee)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-key">风险代理费（${d.riskRate}%）</span>
+                    <span class="detail-val">${formatMoney(actualRiskFee)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-key">合计收费</span>
+                    <span class="detail-val">${formatMoney(total)}</span>
+                </div>
+            </div>
+        `;
+    }
+</script>
 </body>
 </html>

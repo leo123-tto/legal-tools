@@ -1,744 +1,900 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>诉讼费计算器</title>
-    <style>
-        :root {
-            --bg-primary: #FAFAFA;
-            --bg-secondary: #F5F5F5;
-            --text-primary: #1A1A1A;
-            --text-secondary: #6B6B6B;
-            --text-tertiary: #9B9B9B;
-            --accent: #1E40AF;
-            --accent-hover: #1E3A8A;
-            --accent-light: rgba(30, 64, 175, 0.08);
-            --accent-gradient: linear-gradient(135deg, #1E40AF 0%, #3B5998 100%);
-            --border: #E5E5E5;
-            --focus-ring: rgba(30, 64, 175, 0.2);
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>诉讼费计算器</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-            --radius-lg: 24px;
-            --radius-md: 16px;
-            --radius-sm: 12px;
+    :root {
+      --accent: #4F6AF0;
+      --accent-light: #6B82F5;
+      --accent-dark: #3D56D4;
+      --bg: linear-gradient(180deg, #EDF0F8 0%, #F0F1F5 100%);
+      --card-bg: rgba(255, 255, 255, 0.88);
+      --text: #1A1D2E;
+      --text-sub: rgba(60, 68, 90, 0.8);
+      --border: rgba(80, 90, 130, 0.12);
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+      --shadow: 0 2px 16px rgba(79, 106, 240, 0.06);
+      --shadow-md: 0 4px 24px rgba(79, 106, 240, 0.1);
+    }
 
-            --shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-            --shadow-hover: 0 12px 48px rgba(0, 0, 0, 0.12);
-            --shadow-button: 0 4px 0 #1E3A8A;
-            --shadow-button-active: 0 2px 0 #1E3A8A;
-        }
+    html, body {
+      min-height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 16px;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+    body {
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(180deg, #EBF4FF 0%, #FAFAFA 50%, #F0F4F8 100%);
-            min-height: 100vh;
-            padding: 32px 16px;
-            color: var(--text-primary);
-            line-height: 1.6;
-        }
+    /* ── Header ── */
+    .header {
+      padding: 18px 20px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-        body::before {
-            content: '';
-            position: fixed;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background-image:
-                radial-gradient(circle at 20% 30%, rgba(30, 64, 175, 0.06) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(59, 89, 152, 0.04) 0%, transparent 50%),
-                radial-gradient(circle at 40% 80%, rgba(30, 64, 175, 0.03) 0%, transparent 40%);
-            pointer-events: none;
-            z-index: -1;
-        }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 500;
+      padding: 6px 10px 6px 4px;
+      border-radius: 8px;
+      transition: background .15s;
+    }
+    .back-link:active { background: rgba(79,106,240,.08); }
+    .back-link svg { flex-shrink: 0; }
 
-        .container {
-            max-width: 480px;
-            margin: 0 auto;
-        }
+    .page-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: .02em;
+    }
 
-        .header {
-            text-align: center;
-            margin-bottom: 28px;
-            position: relative;
-        }
+    /* ── Main ── */
+    .main {
+      padding: 18px 16px 0;
+      max-width: 520px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
 
-        .header-icon {
-            font-size: 44px;
-            margin-bottom: 12px;
-            display: block;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-        }
+    /* ── Card ── */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 18px 18px;
+    }
 
-        .header h1 {
-            font-size: 26px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            color: var(--text-primary);
-            margin-bottom: 6px;
-        }
+    /* ── Segment Control ── */
+    .segment-wrap {
+      display: flex;
+      background: rgba(240, 242, 248, 0.8);
+      border-radius: var(--radius-md);
+      padding: 3px;
+      gap: 3px;
+    }
 
-        .header p {
-            font-size: 13px;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
+    .seg-btn {
+      flex: 1;
+      padding: 10px 0;
+      border: none;
+      background: transparent;
+      border-radius: 11px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: background .18s, color .18s, box-shadow .18s;
+      letter-spacing: .02em;
+    }
 
-        .back-link {
-            position: absolute;
-            top: -10px;
-            left: 0;
-            font-size: 13px;
-            color: var(--accent);
-            text-decoration: none;
-            padding: 8px 12px;
-            background: rgba(30, 64, 175, 0.08);
-            border-radius: 20px;
-            transition: all 0.2s ease;
-            display: inline-block;
-            z-index: 10;
-        }
+    .seg-btn.active {
+      background: var(--card-bg);
+      color: var(--accent);
+      box-shadow: 0 1px 6px rgba(79,106,240,0.12);
+    }
 
-        .back-link:hover {
-            background: rgba(30, 64, 175, 0.15);
-            transform: translateX(-2px);
-        }
+    /* ── Section Label ── */
+    .section-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 8px;
+    }
 
-        .back-link:active {
-            transform: translateX(0);
-            background: rgba(30, 64, 175, 0.2);
-        }
+    /* ── Input Row ── */
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 2px;
+    }
 
-        .card {
-            background: rgba(255, 255, 255, 0.98);
-            backdrop-filter: blur(20px);
-            border-radius: var(--radius-lg);
-            padding: 28px 24px;
-            border: 1px solid rgba(229, 229, 229, 0.5);
-            box-shadow: var(--shadow);
-        }
+    .input-wrap {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
 
-        .form-section {
-            margin-bottom: 28px;
-            padding-bottom: 28px;
-            border-bottom: 1px solid rgba(229, 229, 229, 0.6);
-        }
+    .amount-input {
+      width: 100%;
+      height: 52px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 0 60px 0 16px;
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text);
+      background: rgba(240, 242, 248, 0.8);
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
 
-        .form-section:last-of-type {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
+    .amount-input:focus {
+      border-color: var(--accent-light);
+      box-shadow: 0 0 0 3px rgba(79,106,240,.12);
+      background: #fff;
+    }
 
-        .section-label {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--text-tertiary);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+    .amount-input::placeholder { color: rgba(100,110,135,0.4); font-weight: 400; font-size: 16px; }
 
-        .section-label::before {
-            content: '';
-            width: 4px;
-            height: 16px;
-            background: var(--accent-gradient);
-            border-radius: 2px;
-        }
+    .input-unit {
+      position: absolute;
+      right: 14px;
+      font-size: 13px;
+      color: var(--text-sub);
+      font-weight: 500;
+      pointer-events: none;
+    }
 
-        .options-grid {
-            display: grid;
-            gap: 12px;
-        }
+    /* ── Toggle Row ── */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0 4px;
+    }
 
-        .options-grid.grid-2 {
-            grid-template-columns: 1fr 1fr;
-        }
+    .toggle-label {
+      font-size: 15px;
+      color: var(--text);
+      font-weight: 500;
+    }
 
-        .option-btn {
-            padding: 18px 14px;
-            background: linear-gradient(145deg, #FFFFFF 0%, #F5F5F5 100%);
-            border: 1px solid #E0E0E0;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            transition: all 0.12s ease;
-            text-align: center;
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--text-primary);
-            position: relative;
-            box-shadow: 0 4px 0 #D0D0D0;
-        }
+    .toggle-desc {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-top: 1px;
+    }
 
-        .option-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 2px 0 #D0D0D0;
-        }
+    /* iOS toggle */
+    .ios-toggle {
+      position: relative;
+      width: 50px;
+      height: 30px;
+      flex-shrink: 0;
+    }
 
-        .option-btn.active {
-            border-color: var(--accent);
-            background: var(--accent-light);
-            color: var(--accent);
-            box-shadow: 0 4px 0 rgba(30, 64, 175, 0.3);
-        }
+    .ios-toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      position: absolute;
+    }
 
-        .option-btn.active:active {
-            box-shadow: 0 2px 0 rgba(30, 64, 175, 0.3);
-        }
+    .ios-toggle-track {
+      position: absolute;
+      inset: 0;
+      background: #d1d5db;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: background .2s;
+    }
 
-        .option-btn .icon {
-            font-size: 24px;
-            margin-bottom: 8px;
-            display: block;
-        }
+    .ios-toggle input:checked + .ios-toggle-track {
+      background: #34c759;
+    }
 
-        .option-btn .desc {
-            font-size: 11px;
-            color: var(--text-tertiary);
-            margin-top: 4px;
-            font-weight: 400;
-        }
+    .ios-toggle-track::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 24px;
+      height: 24px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 1px 4px rgba(0,0,0,.18);
+      transition: transform .2s cubic-bezier(.4,0,.2,1);
+    }
 
-        .option-btn.active .desc {
-            color: var(--accent);
-        }
+    .ios-toggle input:checked + .ios-toggle-track::after {
+      transform: translateX(20px);
+    }
 
-        .input-wrapper {
-            position: relative;
-        }
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 12px 0;
+    }
 
-        .input-field {
-            width: 100%;
-            padding: 18px 18px;
-            padding-right: 70px;
-            font-size: 20px;
-            font-weight: 600;
-            border: 2px solid #E0E0E0;
-            border-radius: var(--radius-md);
-            outline: none;
-            transition: all 0.2s ease;
-            background: white;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-            -moz-appearance: textfield;
-        }
+    /* ── Result Card ── */
+    .result-card {
+      background: linear-gradient(135deg, #4F6AF0 0%, #9B6FE8 100%);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      padding: 20px 20px 18px;
+      color: #fff;
+      display: none;
+    }
 
-        .input-field::-webkit-outer-spin-button,
-        .input-field::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
+    .result-card.visible { display: block; }
 
-        .input-field:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 4px var(--focus-ring), 0 2px 12px rgba(30, 64, 175, 0.1);
-        }
+    .result-title {
+      font-size: 13px;
+      font-weight: 600;
+      opacity: .8;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
 
-        .input-field::placeholder {
-            color: var(--text-tertiary);
-        }
+    .result-main {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -.01em;
+      line-height: 1.1;
+      margin-bottom: 2px;
+    }
 
-        .input-suffix {
-            position: absolute;
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 15px;
-            color: var(--text-secondary);
-            font-weight: 600;
-        }
+    .result-sub {
+      font-size: 13px;
+      opacity: .75;
+      margin-bottom: 14px;
+    }
 
-        .result-section {
-            margin-top: 28px;
-            padding-top: 20px;
-            display: none;
-            animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
+    .result-breakdown {
+      background: rgba(255,255,255,.15);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
 
-        .result-section.show {
-            display: block;
-        }
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+    }
 
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(24px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+    .result-row .label { opacity: .85; }
+    .result-row .value { font-weight: 700; }
 
-        .result-card {
-            background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
-            border-radius: var(--radius-md);
-            padding: 18px 20px;
-            text-align: center;
-            border: 1px solid rgba(30, 64, 175, 0.15);
-            box-shadow: 0 4px 16px rgba(30, 64, 175, 0.08);
-        }
+    .result-sep {
+      height: 1px;
+      background: rgba(255,255,255,.2);
+    }
 
-        .result-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
+    .result-total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 15px;
+      font-weight: 700;
+    }
 
-        .result-value {
-            font-size: 36px;
-            font-weight: 800;
-            color: var(--accent);
-            letter-spacing: -1px;
-            line-height: 1.2;
-        }
+    /* ── Placeholder ── */
+    .placeholder-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 28px 20px;
+      text-align: center;
+      color: var(--text-sub);
+      font-size: 14px;
+    }
 
-        .result-range {
-            font-size: 12px;
-            color: var(--text-tertiary);
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid rgba(30, 64, 175, 0.1);
-        }
+    .placeholder-icon {
+      font-size: 36px;
+      margin-bottom: 10px;
+      display: block;
+    }
 
-        .hidden {
-            display: none !important;
-        }
+    /* ── Basis link ── */
+    .basis-link-wrap {
+      text-align: center;
+      padding: 4px 0 2px;
+    }
 
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: rgba(26, 26, 26, 0.95);
-            color: white;
-            padding: 14px 24px;
-            border-radius: var(--radius-sm);
-            font-size: 14px;
-            font-weight: 500;
-            opacity: 0;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: 1000;
-            backdrop-filter: blur(10px);
-        }
+    .basis-link {
+      color: var(--accent);
+      font-size: 13px;
+      text-decoration: none;
+      border-bottom: 1px dashed var(--accent-light);
+      padding-bottom: 1px;
+      cursor: pointer;
+    }
+    .basis-link:active { opacity: .7; }
 
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      color: var(--text-sub);
+      font-size: 12px;
+      padding: 24px 20px 0;
+      max-width: 520px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
 
-        @media (max-width: 480px) {
-            body { padding: 16px 12px; }
-            .card { padding: 20px 16px; }
-            .header h1 { font-size: 22px; }
-            .header-icon { font-size: 36px; }
-            .result-value { font-size: 32px; }
-            .options-grid.grid-2 { gap: 8px; }
-            .option-btn { padding: 14px 10px; font-size: 14px; }
-            .option-btn .icon { font-size: 20px; }
-        }
-    </style>
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s;
+      padding: 0;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal {
+      background: var(--card-bg);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      width: 100%;
+      max-width: 520px;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 0 0 env(safe-area-inset-bottom, 16px);
+      transform: translateY(100%);
+      transition: transform .3s cubic-bezier(.4,0,.2,1);
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .modal-overlay.open .modal {
+      transform: translateY(0);
+    }
+
+    .modal-header {
+      position: sticky;
+      top: 0;
+      background: var(--card-bg);
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 1;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .modal-close {
+      width: 30px;
+      height: 30px;
+      border: none;
+      background: rgba(240, 242, 248, 0.8);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-sub);
+      font-size: 16px;
+      transition: background .15s;
+    }
+    .modal-close:active { background: rgba(80, 90, 130, 0.12); }
+
+    .modal-body {
+      padding: 16px 20px 20px;
+      font-size: 13.5px;
+      color: var(--text);
+      line-height: 1.75;
+    }
+
+    .modal-body h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent);
+      margin: 14px 0 6px;
+    }
+
+    .modal-body h3:first-child { margin-top: 0; }
+
+    .modal-body p { margin-bottom: 6px; color: #374151; }
+
+    .law-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0;
+      font-size: 12.5px;
+    }
+
+    .law-table th {
+      background: rgba(240, 242, 248, 0.8);
+      color: var(--accent);
+      font-weight: 600;
+      padding: 6px 8px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .law-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid rgba(80, 90, 130, 0.06);
+      color: #374151;
+    }
+
+    .law-table tr:last-child td { border-bottom: none; }
+
+    .law-table tr:nth-child(even) td { background: rgba(240, 242, 248, 0.5); }
+
+    /* ── Hint text ── */
+    .hint {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    @media (min-width: 520px) {
+      .header { padding: 24px 24px 0; max-width: 520px; margin: 0 auto; }
+      .main { padding: 20px 24px 0; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <!-- 头部 -->
-        <div class="header">
-            <a href="index.html" class="back-link">← 返回主页</a>
-            <span class="header-icon">🏛️</span>
-            <h1>诉讼费计算器</h1>
+
+<!-- Header -->
+<div class="header">
+  <a href="index.html" class="back-link" aria-label="返回">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 18 9 12 15 6"/>
+    </svg>
+    返回
+  </a>
+  <h1 class="page-title">诉讼费计算器</h1>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Case type segment -->
+  <div class="card" style="padding: 12px 14px;">
+    <div class="segment-wrap" role="tablist" aria-label="案件类型">
+      <button class="seg-btn active" id="seg-property" role="tab" aria-selected="true" onclick="switchCase('property')">财产案件</button>
+      <button class="seg-btn" id="seg-divorce" role="tab" aria-selected="false" onclick="switchCase('divorce')">离婚案件</button>
+    </div>
+  </div>
+
+  <!-- Property case panel -->
+  <div class="card" id="panel-property">
+    <div class="section-label">争议标的金额</div>
+    <div class="input-row">
+      <div class="input-wrap">
+        <input
+          class="amount-input"
+          id="prop-amount"
+          type="number"
+          inputmode="decimal"
+          min="0"
+          step="any"
+          placeholder="请输入金额"
+          aria-label="财产案件争议金额（万元）"
+          oninput="calcProperty()"
+        />
+        <span class="input-unit">万元</span>
+      </div>
+    </div>
+    <p class="hint">输入争议标的额，单位万元</p>
+
+    <div class="divider"></div>
+
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">申请财产保全</div>
+        <div class="toggle-desc">同步计算保全费用</div>
+      </div>
+      <label class="ios-toggle" aria-label="是否申请财产保全">
+        <input type="checkbox" id="prop-preservation" onchange="calcProperty()" />
+        <div class="ios-toggle-track"></div>
+      </label>
+    </div>
+  </div>
+
+  <!-- Divorce case panel -->
+  <div class="card" id="panel-divorce" style="display:none;">
+    <div class="toggle-row" style="padding-top: 0;">
+      <div>
+        <div class="toggle-label">涉及财产分割</div>
+        <div class="toggle-desc">超出20万元部分另行计费</div>
+      </div>
+      <label class="ios-toggle" aria-label="是否涉及财产分割">
+        <input type="checkbox" id="div-has-split" onchange="onDivorceSplitChange()" />
+        <div class="ios-toggle-track"></div>
+      </label>
+    </div>
+
+    <div id="div-amount-row" style="display:none; margin-top: 8px;">
+      <div class="divider" style="margin-bottom: 14px;"></div>
+      <div class="section-label">财产总额</div>
+      <div class="input-row">
+        <div class="input-wrap">
+          <input
+            class="amount-input"
+            id="div-amount"
+            type="number"
+            inputmode="decimal"
+            min="0"
+            step="any"
+            placeholder="请输入财产总额"
+            aria-label="离婚财产总额（万元）"
+            oninput="calcDivorce()"
+          />
+          <span class="input-unit">万元</span>
         </div>
+      </div>
+      <p class="hint">20万元以内按定额200元；超出部分按0.5%累加</p>
+    </div>
 
-        <!-- 主卡片 -->
-        <div class="card">
-            <!-- 案件类型 -->
-            <div class="form-section">
-                <div class="section-label">案件类型</div>
-                <div class="options-grid grid-2">
-                    <button class="option-btn type-btn active" onclick="selectType('property', this)">
-                        <span class="icon">💰</span>
-                        <span>财产案件</span>
-                        <span class="desc">按标的额分段累计</span>
-                    </button>
-                    <button class="option-btn type-btn" onclick="selectType('divorce', this)">
-                        <span class="icon">💔</span>
-                        <span>离婚案件</span>
-                        <span class="desc">基础费 + 财产分割</span>
-                    </button>
-                </div>
-            </div>
+    <div class="divider" style="margin-top: 14px;"></div>
 
-            <!-- 财产案件输入 -->
-            <div id="propertyCaseInput">
-                <div class="form-section">
-                    <div class="section-label">诉讼标的额</div>
-                    <div class="input-wrapper">
-                        <input type="number" class="input-field" id="propertyAmount" placeholder="0" min="0" step="0.01" oninput="calculateFee()">
-                        <span class="input-suffix">万元</span>
-                    </div>
-                </div>
-                <div class="form-section">
-                    <div class="section-label">是否需要财产保全</div>
-                    <div class="options-grid grid-2">
-                        <button class="option-btn" id="preservationYes" onclick="setPreservation(true, this)">
-                            <span>需要</span>
-                        </button>
-                        <button class="option-btn active" id="preservationNo" onclick="setPreservation(false, this)">
-                            <span>不需要</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
+    <div class="toggle-row">
+      <div>
+        <div class="toggle-label">申请财产保全</div>
+        <div class="toggle-desc">同步计算保全费用</div>
+      </div>
+      <label class="ios-toggle" aria-label="离婚案件是否申请财产保全">
+        <input type="checkbox" id="div-preservation" onchange="calcDivorce()" />
+        <div class="ios-toggle-track"></div>
+      </label>
+    </div>
 
-            <!-- 离婚案件输入 -->
-            <div id="divorceCaseInput" class="hidden">
-                <div class="form-section">
-                    <div class="section-label">是否涉及财产分割</div>
-                    <div class="options-grid grid-2">
-                        <button class="option-btn" id="splitYes" onclick="setSplit(true, this)">
-                            <span>涉及</span>
-                        </button>
-                        <button class="option-btn active" id="splitNo" onclick="setSplit(false, this)">
-                            <span>不涉及</span>
-                        </button>
-                    </div>
-                </div>
-                <!-- 涉及财产分割时才显示 -->
-                <div id="divorceSplitContent" class="hidden">
-                    <div class="form-section">
-                        <div class="section-label">财产总额</div>
-                        <div class="input-wrapper">
-                            <input type="number" class="input-field" id="divorceAmount" placeholder="0" min="0" step="0.01" oninput="calculateFee()">
-                            <span class="input-suffix">万元</span>
-                        </div>
-                    </div>
-                    <div class="form-section">
-                        <div class="section-label">是否需要财产保全</div>
-                        <div class="options-grid grid-2">
-                            <button class="option-btn" id="divorcePreservationYes" onclick="setDivorcePreservation(true, this)">
-                                <span>需要</span>
-                            </button>
-                            <button class="option-btn active" id="divorcePreservationNo" onclick="setDivorcePreservation(false, this)">
-                                <span>不需要</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 结果区域 -->
-            <div class="result-section show" id="resultSection">
-                <div class="result-card" id="feeCard">
-                    <div class="result-label">⚖️ 诉讼费</div>
-                    <div class="result-value" id="feeResult">--</div>
-                    <div class="result-range" id="feeDetail">--</div>
-                    <!-- 财产保全费（动态显示） -->
-                    <div class="preservation-fee-row hidden" id="preservationFeeRow" style="margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(30, 64, 175, 0.1);">
-                        <div class="result-label" style="margin-bottom: 6px;">🔒 财产保全费</div>
-                        <div class="result-value" id="preservationFeeResult" style="font-size: 28px;">--</div>
-                        <div class="result-range" id="preservationFeeDetail" style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(30, 64, 175, 0.1);">--</div>
-                    </div>
-                </div>
-            </div>
+    <div id="div-preservation-amount-row" style="display:none; margin-top: 8px;">
+      <div class="section-label">保全金额</div>
+      <div class="input-row">
+        <div class="input-wrap">
+          <input
+            class="amount-input"
+            id="div-pres-amount"
+            type="number"
+            inputmode="decimal"
+            min="0"
+            step="any"
+            placeholder="请输入保全金额"
+            aria-label="保全金额（万元）"
+            oninput="calcDivorce()"
+          />
+          <span class="input-unit">万元</span>
         </div>
+      </div>
     </div>
+  </div>
 
-    <!-- 底部信息 -->
-    <div style="text-align: center; margin-top: 24px; margin-bottom: 24px;">
-        <p style="font-size: 14px; font-weight: 600; color: var(--text-primary);">江苏漫修（无锡）律师事务所 刘成律师</p>
+  <!-- Result: placeholder -->
+  <div class="placeholder-card" id="result-placeholder">
+    <span class="placeholder-icon">⚖️</span>
+    <div>请输入金额后自动显示计算结果</div>
+  </div>
+
+  <!-- Result: actual -->
+  <div class="result-card" id="result-card" role="region" aria-live="polite" aria-label="计算结果">
+    <div class="result-title">计算结果</div>
+    <div class="result-main" id="result-main-fee">—</div>
+    <div class="result-sub" id="result-sub-text">诉讼费</div>
+    <div class="result-breakdown" id="result-breakdown" style="display:none;">
+      <div class="result-row" id="result-row-base">
+        <span class="label">案件受理费</span>
+        <span class="value" id="result-base-fee">—</span>
+      </div>
+      <div class="result-sep"></div>
+      <div class="result-row" id="result-row-preservation">
+        <span class="label">财产保全费</span>
+        <span class="value" id="result-preservation-fee">—</span>
+      </div>
+      <div class="result-sep" id="result-sep2"></div>
+      <div class="result-total-row" id="result-row-total">
+        <span>合计</span>
+        <span id="result-total-fee">—</span>
+      </div>
     </div>
+  </div>
 
-    <!-- 可点击的法规链接 -->
-    <div style="text-align: center; margin-bottom: 24px;">
-        <p onclick="toggleRegulations()" style="font-size: 14px; color: var(--accent); cursor: pointer; display: inline-block; padding: 8px 16px; border-radius: 20px; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(30, 64, 175, 0.08)'" onmouseout="this.style.background='transparent'">
-            📜 依据《诉讼费用交纳办法》
-        </p>
+  <!-- Legal basis link -->
+  <div class="basis-link-wrap">
+    <a class="basis-link" onclick="openModal()" role="button" tabindex="0" onkeydown="if(event.key==='Enter')openModal()">查看计费依据 · 《诉讼费用交纳办法》</a>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <div>江苏漫修（无锡）律师事务所 刘成律师</div>
+  <div style="margin-top:2px; font-size:11px; opacity:.7;">本计算器仅供参考，实际费用以法院核定为准</div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal-overlay" onclick="onOverlayClick(event)" role="dialog" aria-modal="true" aria-labelledby="modal-title-text">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title-text">计费法律依据</div>
+      <button class="modal-close" onclick="closeModal()" aria-label="关闭">✕</button>
     </div>
+    <div class="modal-body">
+      <h3>一、法律依据</h3>
+      <p>根据国务院《诉讼费用交纳办法》（2007年施行），人民法院收取诉讼费用的标准如下。</p>
 
-    <!-- 法规内容弹窗 -->
-    <div id="regulationsModal" onclick="toggleRegulations()" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px;">
-        <div onclick="event.stopPropagation()" style="background: white; border-radius: 20px; max-width: 480px; width: 100%; max-height: 70vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
-            <div style="padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: white; border-radius: 20px 20px 0 0;">
-                <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0;">📜 诉讼费用交纳办法</h3>
-                <button onclick="toggleRegulations()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-tertiary); padding: 0; line-height: 1;">×</button>
-            </div>
-            <div style="padding: 20px 24px;">
-                <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.8;">
-                    <p style="margin-bottom: 12px;"><strong>第三条</strong> 在人民法院进行诉讼，依照本办法规定交纳诉讼费用。</p>
-                    <p style="margin-bottom: 12px;"><strong>第六条</strong> 当事人应当向人民法院交纳的诉讼费用包括：<br/>（一）案件受理费；<br/>（二）申请费。</p>
-                    <p style="margin-bottom: 12px;"><strong>第十三条</strong> 案件受理费分别按照下列标准交纳：<br/>
-                    <strong>（一）财产案件</strong> 根据诉讼请求的金额或者价额，按照下列比例分段累计交纳：<br/>
-                    1. 不超过 1 万元的，每件交纳 50 元；<br/>
-                    2. 超过 1 万元至 10 万元的部分，按照 2.5% 交纳；<br/>
-                    3. 超过 10 万元至 20 万元的部分，按照 2% 交纳；<br/>
-                    4. 超过 20 万元至 50 万元的部分，按照 1.5% 交纳；<br/>
-                    5. 超过 50 万元至 100 万元的部分，按照 1% 交纳；<br/>
-                    6. 超过 100 万元至 200 万元的部分，按照 0.9% 交纳；<br/>
-                    7. 超过 200 万元至 500 万元的部分，按照 0.8% 交纳；<br/>
-                    8. 超过 500 万元至 1000 万元的部分，按照 0.7% 交纳；<br/>
-                    9. 超过 1000 万元至 2000 万元的部分，按照 0.6% 交纳；<br/>
-                    10. 超过 2000 万元的部分，按照 0.5% 交纳。</p>
-                    <p style="margin-bottom: 12px;"><strong>（二）离婚案件</strong> 每件交纳 50 元至 300 元。涉及财产分割，财产总额不超过 20 万元的，不另行交纳；超过 20 万元的部分，按照 0.5% 交纳。</p>
-                    <p style="margin-bottom: 12px;"><strong>第十四条</strong> 申请费按照下列标准交纳：<br/>
-                    <strong>（二）申请保全措施的</strong> 根据实际保全的财产数额按照下列标准交纳：<br/>
-                    1. 财产数额不超过 1000 元或者不涉及财产数额的，每件交纳 30 元；<br/>
-                    2. 超过 1000 元至 10 万元的部分，按照 1% 交纳；<br/>
-                    3. 超过 10 万元的部分，按照 0.5% 交纳。<br/>
-                    但是，当事人申请保全措施交纳的费用最多不超过 5000 元。</p>
-                </div>
-            </div>
-        </div>
+      <h3>二、财产案件受理费（分段累计）</h3>
+      <table class="law-table">
+        <thead>
+          <tr>
+            <th>争议金额（元）</th>
+            <th>计费标准</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1 万元以下</td><td>50 元</td></tr>
+          <tr><td>1 万 ~ 10 万</td><td>2.5%，最低50元</td></tr>
+          <tr><td>10 万 ~ 20 万</td><td>2%</td></tr>
+          <tr><td>20 万 ~ 50 万</td><td>1.5%</td></tr>
+          <tr><td>50 万 ~ 100 万</td><td>1%</td></tr>
+          <tr><td>100 万 ~ 200 万</td><td>0.9%</td></tr>
+          <tr><td>200 万 ~ 500 万</td><td>0.8%</td></tr>
+          <tr><td>500 万 ~ 1000 万</td><td>0.7%</td></tr>
+          <tr><td>1000 万 ~ 2000 万</td><td>0.6%</td></tr>
+          <tr><td>2000 万以上</td><td>0.5%</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:12px; color:#6b7280;">上述为分段累计计算，实际每段按该段费率计算后加总。</p>
+
+      <h3>三、离婚案件受理费</h3>
+      <p>每件交纳 50 元至 300 元，本计算器取 200 元定额。</p>
+      <p>涉及财产分割且财产总额超过 20 万元的，超出部分按 <strong>0.5%</strong> 累加收取。</p>
+
+      <h3>四、财产保全费（上限 5000 元）</h3>
+      <table class="law-table">
+        <thead>
+          <tr>
+            <th>保全金额（元）</th>
+            <th>计费标准</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1000 元以下</td><td>30 元</td></tr>
+          <tr><td>1000 ~ 10 万</td><td>30元 + 超出1000元部分 × 1%</td></tr>
+          <tr><td>10 万以上</td><td>30元 + 990元 + 超出10万部分 × 0.5%，最高 5000 元</td></tr>
+        </tbody>
+      </table>
+
+      <h3>五、条文参考</h3>
+      <p>《诉讼费用交纳办法》第十三条、第十四条、第二十二条。</p>
     </div>
+  </div>
+</div>
 
-    <!-- 提示框 -->
-    <div class="toast" id="toast"></div>
+<script>
+  // ── State ──
+  let currentCase = 'property';
 
-    <script>
-        let currentType = 'property';
-        let divorceHasSplit = false;  // 默认不涉及财产分割
-        let needPreservation = false;
-        let divorceNeedPreservation = false;
+  // ── Case switch ──
+  function switchCase(type) {
+    currentCase = type;
+    document.getElementById('panel-property').style.display = type === 'property' ? '' : 'none';
+    document.getElementById('panel-divorce').style.display  = type === 'divorce'  ? '' : 'none';
+    document.getElementById('seg-property').classList.toggle('active', type === 'property');
+    document.getElementById('seg-divorce').classList.toggle('active', type === 'divorce');
+    document.getElementById('seg-property').setAttribute('aria-selected', type === 'property');
+    document.getElementById('seg-divorce').setAttribute('aria-selected', type === 'divorce');
+    clearResult();
+    if (type === 'property') calcProperty();
+    else calcDivorce();
+  }
 
-        // 选择案件类型
-        function selectType(type, btn) {
-            currentType = type;
+  // ── Format fee ──
+  function formatFee(yuan) {
+    if (yuan >= 10000) {
+      const wan = yuan / 10000;
+      return wan.toFixed(2) + ' 万元';
+    }
+    return yuan + ' 元';
+  }
 
-            document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+  // ── Property fee ──
+  function calculatePropertyFee(amountWan) {
+    const amount = amountWan * 10000;
+    if (amount <= 10000) return 50;
+    const brackets = [
+      { limit: 100000,   rate: 0.025, subtract: 200   },
+      { limit: 200000,   rate: 0.02,  subtract: 300   },
+      { limit: 500000,   rate: 0.015, subtract: 1300  },
+      { limit: 1000000,  rate: 0.01,  subtract: 3800  },
+      { limit: 2000000,  rate: 0.009, subtract: 4800  },
+      { limit: 5000000,  rate: 0.008, subtract: 6800  },
+      { limit: 10000000, rate: 0.007, subtract: 11800 },
+      { limit: 20000000, rate: 0.006, subtract: 21800 },
+      { limit: Infinity, rate: 0.005, subtract: 41800 }
+    ];
+    for (const b of brackets) {
+      if (amount <= b.limit) return Math.round(amount * b.rate - b.subtract);
+    }
+  }
 
-            const propertyInput = document.getElementById('propertyCaseInput');
-            const divorceInput = document.getElementById('divorceCaseInput');
+  // ── Divorce fee ──
+  function calculateDivorceFee(amountWan, divorceHasSplit) {
+    const amount = amountWan * 10000;
+    let fee = 200;
+    if (divorceHasSplit && amount > 200000) {
+      fee += (amount - 200000) * 0.005;
+    }
+    return Math.round(fee);
+  }
 
-            if (type === 'property') {
-                propertyInput.classList.remove('hidden');
-                divorceInput.classList.add('hidden');
-                calculateFee();
-            } else {
-                propertyInput.classList.add('hidden');
-                divorceInput.classList.remove('hidden');
-                // 重置离婚案件状态
-                divorceHasSplit = false;
-                divorceNeedPreservation = false;
-                document.getElementById('splitNo').classList.add('active');
-                document.getElementById('splitYes').classList.remove('active');
-                document.getElementById('divorcePreservationNo').classList.add('active');
-                document.getElementById('divorcePreservationYes').classList.remove('active');
-                document.getElementById('divorceSplitContent').classList.add('hidden');
-                calculateFee();
-            }
-        }
+  // ── Preservation fee ──
+  function calculatePreservationFee(amountWan) {
+    const amount = amountWan * 10000;
+    if (amount <= 1000) return 30;
+    if (amount <= 100000) return Math.min(Math.round(30 + (amount - 1000) * 0.01), 5000);
+    return Math.min(Math.round(30 + 99000 * 0.01 + (amount - 100000) * 0.005), 5000);
+  }
 
-        // 设置财产保全（财产案件）
-        function setPreservation(need, btn) {
-            needPreservation = need;
-            document.getElementById('preservationNo').classList.toggle('active', !need);
-            document.getElementById('preservationYes').classList.toggle('active', need);
-            calculateFee();
-        }
+  // ── Show result ──
+  function showResult(baseFee, preservationFee) {
+    const ph = document.getElementById('result-placeholder');
+    const card = document.getElementById('result-card');
+    const mainFeeEl = document.getElementById('result-main-fee');
+    const subTextEl = document.getElementById('result-sub-text');
+    const breakdown = document.getElementById('result-breakdown');
+    const baseFeeEl = document.getElementById('result-base-fee');
+    const presFeeEl = document.getElementById('result-preservation-fee');
+    const totalFeeEl = document.getElementById('result-total-fee');
+    const rowPres = document.getElementById('result-row-preservation');
+    const rowSep2 = document.getElementById('result-sep2');
+    const rowTotal = document.getElementById('result-row-total');
 
-        // 设置财产保全（离婚案件）
-        function setDivorcePreservation(need, btn) {
-            divorceNeedPreservation = need;
-            document.getElementById('divorcePreservationNo').classList.toggle('active', !need);
-            document.getElementById('divorcePreservationYes').classList.toggle('active', need);
-            calculateFee();
-        }
+    const hasPreservation = preservationFee !== null && preservationFee !== undefined;
+    const totalFee = baseFee + (hasPreservation ? preservationFee : 0);
 
-        // 设置离婚案件是否涉及财产分割
-        function setSplit(hasSplit, btn) {
-            divorceHasSplit = hasSplit;
-            document.getElementById('splitNo').classList.toggle('active', !hasSplit);
-            document.getElementById('splitYes').classList.toggle('active', hasSplit);
+    ph.style.display = 'none';
+    card.classList.add('visible');
 
-            // 根据是否涉及财产分割显示/隐藏内容
-            const splitContent = document.getElementById('divorceSplitContent');
-            if (hasSplit) {
-                splitContent.classList.remove('hidden');
-            } else {
-                splitContent.classList.add('hidden');
-                // 重置保全状态
-                divorceNeedPreservation = false;
-                document.getElementById('divorcePreservationNo').classList.add('active');
-                document.getElementById('divorcePreservationYes').classList.remove('active');
-            }
-            calculateFee();
-        }
+    if (hasPreservation) {
+      mainFeeEl.textContent = formatFee(totalFee);
+      subTextEl.textContent = '诉讼费 + 保全费合计';
+      baseFeeEl.textContent = formatFee(baseFee);
+      presFeeEl.textContent = formatFee(preservationFee);
+      totalFeeEl.textContent = formatFee(totalFee);
+      rowPres.style.display = '';
+      rowSep2.style.display = '';
+      rowTotal.style.display = '';
+      breakdown.style.display = '';
+    } else {
+      mainFeeEl.textContent = formatFee(baseFee);
+      subTextEl.textContent = '案件受理费';
+      breakdown.style.display = 'none';
+    }
+  }
 
-        // 计算财产保全费
-        function calculatePreservationFee(amountWan) {
-            const amount = amountWan * 10000; // 转换为元
-            let fee = 0;
+  function clearResult() {
+    document.getElementById('result-placeholder').style.display = '';
+    document.getElementById('result-card').classList.remove('visible');
+  }
 
-            if (amount <= 1000) {
-                fee = 30;
-            } else if (amount <= 100000) {
-                fee = 30 + (amount - 1000) * 0.01;
-            } else {
-                fee = 30 + (100000 - 1000) * 0.01 + (amount - 100000) * 0.005;
-            }
+  // ── Property calc ──
+  function calcProperty() {
+    const raw = document.getElementById('prop-amount').value;
+    if (!raw || isNaN(raw) || Number(raw) < 0) { clearResult(); return; }
+    const amountWan = Number(raw);
+    const baseFee = calculatePropertyFee(amountWan);
+    const wantsPreservation = document.getElementById('prop-preservation').checked;
+    const presFee = wantsPreservation ? calculatePreservationFee(amountWan) : null;
+    showResult(baseFee, presFee);
+  }
 
-            // 最高不超过 5000 元
-            return Math.min(Math.round(fee), 5000);
-        }
+  // ── Divorce split toggle ──
+  function onDivorceSplitChange() {
+    const hasSplit = document.getElementById('div-has-split').checked;
+    document.getElementById('div-amount-row').style.display = hasSplit ? '' : 'none';
+    // Show preservation amount input if preservation is checked
+    const hasPres = document.getElementById('div-preservation').checked;
+    document.getElementById('div-preservation-amount-row').style.display = hasPres ? '' : 'none';
+    calcDivorce();
+  }
 
-        // 计算财产案件诉讼费（分段累计）
-        function calculatePropertyFee(amountWan) {
-            const amount = amountWan * 10000; // 转换为元
-            let fee = 0;
+  // ── Watch preservation toggle for divorce ──
+  document.getElementById('div-preservation').addEventListener('change', function() {
+    document.getElementById('div-preservation-amount-row').style.display = this.checked ? '' : 'none';
+    calcDivorce();
+  });
 
-            if (amount <= 10000) {
-                fee = 50;
-            } else {
-                // 分段累计计算
-                const brackets = [
-                    { limit: 100000, rate: 0.025, subtract: 200 },
-                    { limit: 200000, rate: 0.02, subtract: 300 },
-                    { limit: 500000, rate: 0.015, subtract: 1300 },
-                    { limit: 1000000, rate: 0.01, subtract: 3800 },
-                    { limit: 2000000, rate: 0.009, subtract: 4800 },
-                    { limit: 5000000, rate: 0.008, subtract: 6800 },
-                    { limit: 10000000, rate: 0.007, subtract: 11800 },
-                    { limit: 20000000, rate: 0.006, subtract: 21800 },
-                    { limit: Infinity, rate: 0.005, subtract: 41800 }
-                ];
+  // ── Divorce calc ──
+  function calcDivorce() {
+    const hasSplit = document.getElementById('div-has-split').checked;
+    let amountWan = 0;
+    if (hasSplit) {
+      const raw = document.getElementById('div-amount').value;
+      if (raw && !isNaN(raw) && Number(raw) >= 0) amountWan = Number(raw);
+    }
+    const baseFee = calculateDivorceFee(amountWan, hasSplit);
 
-                for (const bracket of brackets) {
-                    if (amount <= bracket.limit) {
-                        fee = amount * bracket.rate - bracket.subtract;
-                        break;
-                    }
-                }
-            }
+    const wantsPreservation = document.getElementById('div-preservation').checked;
+    let presFee = null;
+    if (wantsPreservation) {
+      const presRaw = document.getElementById('div-pres-amount').value;
+      if (presRaw && !isNaN(presRaw) && Number(presRaw) >= 0) {
+        presFee = calculatePreservationFee(Number(presRaw));
+      } else {
+        presFee = null;
+      }
+    }
 
-            return Math.round(fee);
-        }
+    // For divorce: always show (even 200 yuan base fee is meaningful)
+    showResult(baseFee, presFee);
+  }
 
-        // 计算离婚案件诉讼费
-        function calculateDivorceFee(amountWan) {
-            const amount = amountWan * 10000; // 转换为元
-            let fee = 200; // 基础费（50-300 元，取中间值）
+  // ── Modal ──
+  function openModal() {
+    document.getElementById('modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
 
-            if (divorceHasSplit && amount > 200000) {
-                // 超过 20 万元部分按 0.5% 交纳
-                fee += (amount - 200000) * 0.005;
-            }
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
 
-            return Math.round(fee);
-        }
+  function onOverlayClick(e) {
+    if (e.target === document.getElementById('modal-overlay')) closeModal();
+  }
 
-        // 计算诉讼费
-        function calculateFee() {
-            let fee = 0;
-            let detail = '';
-            let preservationFee = 0;
-            let preservationDetail = '';
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+  });
 
-            if (currentType === 'property') {
-                const amount = parseFloat(document.getElementById('propertyAmount').value) || 0;
-
-                if (amount <= 0) {
-                    document.getElementById('feeResult').textContent = '--';
-                    document.getElementById('feeDetail').textContent = '--';
-                    document.getElementById('preservationFeeRow').classList.add('hidden');
-                    return;
-                }
-
-                fee = calculatePropertyFee(amount);
-                detail = `标的额：${amount}万元`;
-
-                // 计算财产保全费（使用标的金额）
-                if (needPreservation) {
-                    preservationFee = calculatePreservationFee(amount);
-                    preservationDetail = `保全财产：${amount}万元`;
-                }
-
-            } else {
-                // 离婚案件
-                if (!divorceHasSplit) {
-                    // 不涉及财产分割，每件交纳 50-300 元
-                    document.getElementById('feeResult').textContent = '约 200 元';
-                    document.getElementById('feeDetail').textContent = '不涉及财产分割';
-
-                    // 隐藏保全费行
-                    document.getElementById('preservationFeeRow').classList.add('hidden');
-                    return;
-                } else {
-                    const amount = parseFloat(document.getElementById('divorceAmount').value) || 0;
-                    fee = calculateDivorceFee(amount);
-
-                    // 不超过 20 万元，不另行交纳，显示约 200 元
-                    if (amount <= 20) {
-                        document.getElementById('feeResult').textContent = '约 200 元';
-                        document.getElementById('feeDetail').textContent = `财产总额：${amount}万元（未超 20 万）`;
-
-                        // 隐藏保全费行
-                        document.getElementById('preservationFeeRow').classList.add('hidden');
-                        return;
-                    } else {
-                        detail = `财产总额：${amount}万元（含财产分割）`;
-                    }
-
-                    // 计算财产保全费（使用财产总额）
-                    if (divorceNeedPreservation && amount > 0) {
-                        preservationFee = calculatePreservationFee(amount);
-                        preservationDetail = `保全财产：${amount}万元`;
-                    }
-                }
-            }
-
-            // 格式化诉讼费结果
-            let feeText = '';
-            if (fee >= 10000) {
-                feeText = (fee / 10000).toFixed(2) + ' 万元';
-            } else {
-                feeText = fee + ' 元';
-            }
-
-            document.getElementById('feeResult').textContent = feeText;
-            document.getElementById('feeDetail').textContent = detail;
-
-            // 显示/隐藏财产保全费行
-            const preservationRow = document.getElementById('preservationFeeRow');
-            if (preservationFee > 0) {
-                preservationRow.classList.remove('hidden');
-                let preservationText = '';
-                if (preservationFee >= 10000) {
-                    preservationText = (preservationFee / 10000).toFixed(2) + ' 万元';
-                } else {
-                    preservationText = preservationFee + ' 元';
-                }
-                document.getElementById('preservationFeeResult').textContent = preservationText;
-                document.getElementById('preservationFeeDetail').textContent = preservationDetail;
-            } else {
-                preservationRow.classList.add('hidden');
-            }
-        }
-
-        // 显示提示
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2000);
-        }
-
-        // 切换法规弹窗
-        function toggleRegulations() {
-            const modal = document.getElementById('regulationsModal');
-            modal.classList.toggle('hidden');
-            // 防止背景滚动
-            if (!modal.classList.contains('hidden')) {
-                document.body.style.overflow = 'hidden';
-            } else {
-                document.body.style.overflow = '';
-            }
-        }
-    </script>
+  // ── Init divorce preservation toggle visibility ──
+  (function init() {
+    document.getElementById('div-preservation-amount-row').style.display = 'none';
+  })();
+</script>
 </body>
 </html>
