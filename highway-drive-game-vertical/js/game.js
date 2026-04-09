@@ -297,6 +297,7 @@ const Game = {
         this.state.lastWeatherDistance = 0;
         this.state.junctionCooldown = 300;
         this.state.serviceAreaCooldown = 400;
+        this.state.collisionCooldown = 0;
         this.state.playerX = this.state.lanes.positions[1];
         this.state.playerY = this.canvas.height * 0.7;
         this.state.targetX = this.state.playerX;
