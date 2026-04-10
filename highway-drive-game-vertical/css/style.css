@@ -117,143 +117,44 @@ body {
     white-space: nowrap;
 }
 
-/* 退出按钮 */
+/* 退出按钮 - 右上角 */
 #in-game-exit {
     position: absolute;
-    top: 10px;
-    right: 15px;
+    top: 8px;
+    right: 8px;
     display: none;
     pointer-events: auto;
     z-index: 100;
 }
 
-/* 引导页 */
-#guide-panel {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.95);
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    pointer-events: auto;
-    z-index: 200;
-    padding: 20px;
-}
-
-#guide-title {
-    color: #4ecca3;
-    font-size: 32px;
-    font-weight: bold;
-    margin-bottom: 30px;
-    text-shadow: 2px 2px 0 #000;
-}
-
-#guide-content {
-    max-width: 400px;
-    margin-bottom: 40px;
-}
-
-.guide-item {
-    display: flex;
-    align-items: flex-start;
-    margin: 15px 0;
-    color: #fff;
-    font-size: 16px;
-    line-height: 1.5;
-}
-
-.guide-icon {
-    font-size: 24px;
-    margin-right: 12px;
-    flex-shrink: 0;
-}
-
-.guide-text {
-    flex: 1;
-}
-
-#guide-start-btn {
-    margin-top: 20px;
-}
-
-/* 方向控制按钮 - 竖屏布局 */
-#touch-controls {
-    position: absolute;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: none;
-    pointer-events: auto;
-    z-index: 90;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.touch-btn-row {
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-}
-
-.touch-btn {
-    width: 70px;
-    height: 70px;
-    background: rgba(255, 255, 255, 0.25);
-    border: 4px solid rgba(255, 255, 255, 0.6);
-    border-radius: 50%;
-    color: #fff;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-    transition: all 0.15s;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-    backdrop-filter: blur(4px);
-}
-
-.touch-btn:active {
-    background: rgba(78, 204, 163, 0.7);
-    border-color: #4ecca3;
-    transform: scale(0.92);
-}
-
-/* 音量控制 */
+/* 音量控制 - 左上角 */
 #sound-control {
     position: absolute;
-    top: 10px;
-    left: 15px;
+    top: 8px;
+    left: 8px;
     display: none;
     pointer-events: auto;
     z-index: 100;
 }
 
 #sound-toggle {
-    padding: 8px 12px;
-    font-size: 20px;
-    min-width: 44px;
+    padding: 6px 10px;
+    font-size: 18px;
+    min-width: 40px;
 }
 
-/* 状态栏 - 竖屏在顶部 */
+/* 状态栏 - 顶部居中 */
 #status-bar {
     position: absolute;
-    top: 50px;
-    left: 15px;
-    right: 15px;
+    top: 8px;
+    left: 60px;
+    right: 60px;
     display: flex;
     justify-content: space-around;
     align-items: center;
     background: rgba(0,0,0,0.75);
-    padding: 12px 15px;
-    border-radius: 12px;
+    padding: 8px 10px;
+    border-radius: 10px;
     pointer-events: auto;
     border: 3px solid #4ecca3;
 }
@@ -270,18 +171,18 @@ body {
     font-size: 16px;
 }
 
-/* 油量条 */
+/* 油量条 - 状态栏下方 */
 #fuel-bar-container {
     position: absolute;
-    top: 115px;
+    top: 50px;
     left: 15px;
     right: 15px;
-    height: 24px;
+    height: 20px;
     background: rgba(0,0,0,0.75);
-    border-radius: 12px;
-    padding: 4px;
+    border-radius: 10px;
+    padding: 3px;
     pointer-events: auto;
-    border: 3px solid #fff;
+    border: 2px solid #fff;
 }
 
 #fuel-bar {
