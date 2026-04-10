@@ -303,42 +303,6 @@
       box-shadow: 0px 0px 0px 3px rgba(56,152,236,0.15);
     }
 
-    /* 年月日输入组 */
-    .date-group {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      flex: 1;
-    }
-    .date-group input {
-      width: 48px;
-      height: 44px;
-      text-align: center;
-      font-size: 15px;
-      border: 1px solid var(--border-cream);
-      border-radius: 12px;
-      background: var(--bg-white);
-      color: var(--text-near-black);
-      outline: none;
-      -webkit-appearance: none;
-      appearance: none;
-    }
-    .date-group input:focus {
-      border-color: var(--focus-blue);
-      box-shadow: 0px 0px 0px 3px rgba(56,152,236,0.15);
-    }
-    .date-group .sep {
-      color: var(--text-stone-gray);
-      font-size: 14px;
-    }
-    .date-group input::-webkit-inner-spin-button,
-    .date-group input::-webkit-outer-spin-button {
-      -webkit-appearance: none;
-    }
-    .date-group input {
-      -moz-appearance: textfield;
-    }
-
     /* 行内标签+输入 */
     .field-row {
       display: flex;
@@ -981,50 +945,6 @@
     }
   }
 
-  // 自动跳转函数：年份输满4位后自动跳到月份
-  function autoJumpYear(input, nextId) {
-    const val = input.value.replace(/[^0-9]/g, '');
-    if (val.length >= 4) {
-      input.value = val.slice(0, 4);
-      const next = document.getElementById(nextId);
-      if (next) next.focus();
-    }
-  }
-
-  // 自动跳转函数：月份输满2位后自动跳到日期
-  function autoJumpMonth(input, nextId) {
-    const val = input.value.replace(/[^0-9]/g, '');
-    if (val.length >= 2) {
-      input.value = val.slice(0, 2);
-      const next = document.getElementById(nextId);
-      if (next) next.focus();
-    }
-  }
-
-  // 辅助函数：从日期字符串中提取年月日
-  function parseDateStr(dateStr) {
-    if (!dateStr || !dateStr.includes('-')) {
-      return { year: '', month: '', day: '' };
-    }
-    const parts = dateStr.split('-');
-    return {
-      year: parts[0] || '',
-      month: parts[1] || '',
-      day: parts[2] || ''
-    };
-  }
-
-  // 辅助函数：从年月日输入框组合日期字符串
-  function combineDateStr(year, month, day) {
-    const y = year ? year.trim() : '';
-    const m = month ? month.trim().padStart(2, '0') : '';
-    const d = day ? day.trim().padStart(2, '0') : '';
-    if (y && m && d) {
-      return `${y}-${m}-${d}`;
-    }
-    return '';
-  }
-
   // 状态
   let currentMode = 'interest';
   let interestPrincipals = [];
@@ -1097,50 +1017,17 @@
         <div class="field-row">
           <span class="field-label">起算日</span>
           <div class="field-input">
-            ${(() => { const d = parseDateStr(p.startDate); return `
-            <div class="date-group">
-              <input type="text" id="p-startY-${p.id}" value="${d.year}" placeholder="年" maxlength="4" oninput="autoJumpYear(this,'p-startM-${p.id}')" onchange="updateInterestPrincipalDate(${p.id},'startDate')" />
-              <span class="sep">年</span>
-              <input type="text" id="p-startM-${p.id}" value="${d.month}" placeholder="月" maxlength="2" oninput="autoJumpMonth(this,'p-startD-${p.id}')" onchange="updateInterestPrincipalDate(${p.id},'startDate')" />
-              <span class="sep">月</span>
-              <input type="text" id="p-startD-${p.id}" value="${d.day}" placeholder="日" maxlength="2" onchange="updateInterestPrincipalDate(${p.id},'startDate')" />
-              <span class="sep">日</span>
-            </div>`; })()}
+            <input type="date" class="date-input" value="${p.startDate}" onchange="updateInterestPrincipal(${p.id}, 'startDate', this.value)" oninput="validateDateInput(this)" />
           </div>
         </div>
         <div class="field-row">
           <span class="field-label">截止日</span>
           <div class="field-input">
-            ${(() => { const d = parseDateStr(p.endDate); return `
-            <div class="date-group">
-              <input type="text" id="p-endY-${p.id}" value="${d.year}" placeholder="年" maxlength="4" oninput="autoJumpYear(this,'p-endM-${p.id}')" onchange="updateInterestPrincipalDate(${p.id},'endDate')" />
-              <span class="sep">年</span>
-              <input type="text" id="p-endM-${p.id}" value="${d.month}" placeholder="月" maxlength="2" oninput="autoJumpMonth(this,'p-endD-${p.id}')" onchange="updateInterestPrincipalDate(${p.id},'endDate')" />
-              <span class="sep">月</span>
-              <input type="text" id="p-endD-${p.id}" value="${d.day}" placeholder="日" maxlength="2" onchange="updateInterestPrincipalDate(${p.id},'endDate')" />
-              <span class="sep">日</span>
-            </div>`; })()}
+            <input type="date" class="date-input" value="${p.endDate}" onchange="updateInterestPrincipal(${p.id}, 'endDate', this.value)" oninput="validateDateInput(this)" />
           </div>
         </div>
       </div>
     `).join('');
-  }
-
-  // 更新本金日期字段（从年月日输入框组合日期字符串）
-  function updateInterestPrincipalDate(id, field) {
-    const p = interestPrincipals.find(x => x.id === id);
-    if (!p) return;
-    if (field === 'startDate') {
-      const year = document.getElementById('p-startY-' + id).value;
-      const month = document.getElementById('p-startM-' + id).value;
-      const day = document.getElementById('p-startD-' + id).value;
-      p[field] = combineDateStr(year, month, day);
-    } else if (field === 'endDate') {
-      const year = document.getElementById('p-endY-' + id).value;
-      const month = document.getElementById('p-endM-' + id).value;
-      const day = document.getElementById('p-endD-' + id).value;
-      p[field] = combineDateStr(year, month, day);
-    }
   }
 
   function updateInterestPrincipal(id, field, value) {
@@ -1306,31 +1193,11 @@
         </div>
         <div class="field-row">
           <span class="field-label">计算起始日</span>
-          <div class="field-input">
-            ${(() => { const d = parseDateStr(c.dueDate); return `
-            <div class="date-group">
-              <input type="text" id="c-dueY-${c.id}" value="${d.year}" placeholder="年" maxlength="4" oninput="autoJumpYear(this,'c-dueM-${c.id}')" onchange="updateCaseDate(${c.id},'dueDate')" />
-              <span class="sep">年</span>
-              <input type="text" id="c-dueM-${c.id}" value="${d.month}" placeholder="月" maxlength="2" oninput="autoJumpMonth(this,'c-dueD-${c.id}')" onchange="updateCaseDate(${c.id},'dueDate')" />
-              <span class="sep">月</span>
-              <input type="text" id="c-dueD-${c.id}" value="${d.day}" placeholder="日" maxlength="2" onchange="updateCaseDate(${c.id},'dueDate')" />
-              <span class="sep">日</span>
-            </div>`; })()}
-          </div>
+          <div class="field-input"><input type="date" class="date-input" value="${c.dueDate}" onchange="updateCase(${c.id}, 'dueDate', this.value)" oninput="validateDateInput(this)" /></div>
         </div>
         <div class="field-row">
           <span class="field-label">计算截止日</span>
-          <div class="field-input">
-            ${(() => { const d = parseDateStr(c.endDate); return `
-            <div class="date-group">
-              <input type="text" id="c-endY-${c.id}" value="${d.year}" placeholder="年" maxlength="4" oninput="autoJumpYear(this,'c-endM-${c.id}')" onchange="updateCaseDate(${c.id},'endDate')" />
-              <span class="sep">年</span>
-              <input type="text" id="c-endM-${c.id}" value="${d.month}" placeholder="月" maxlength="2" oninput="autoJumpMonth(this,'c-endD-${c.id}')" onchange="updateCaseDate(${c.id},'endDate')" />
-              <span class="sep">月</span>
-              <input type="text" id="c-endD-${c.id}" value="${d.day}" placeholder="日" maxlength="2" onchange="updateCaseDate(${c.id},'endDate')" />
-              <span class="sep">日</span>
-            </div>`; })()}
-          </div>
+          <div class="field-input"><input type="date" class="date-input" value="${c.endDate}" onchange="updateCase(${c.id}, 'endDate', this.value)" oninput="validateDateInput(this)" /></div>
         </div>
         <div class="divider" style="margin:10px 0;"></div>
         <div class="field-row">
@@ -1347,23 +1214,6 @@
         </div>
       </div>
     `).join('');
-  }
-
-  // 更新案件日期字段
-  function updateCaseDate(id, field) {
-    const c = cases.find(x => x.id === id);
-    if (!c) return;
-    if (field === 'dueDate') {
-      const year = document.getElementById('c-dueY-' + id).value;
-      const month = document.getElementById('c-dueM-' + id).value;
-      const day = document.getElementById('c-dueD-' + id).value;
-      c[field] = combineDateStr(year, month, day);
-    } else if (field === 'endDate') {
-      const year = document.getElementById('c-endY-' + id).value;
-      const month = document.getElementById('c-endM-' + id).value;
-      const day = document.getElementById('c-endD-' + id).value;
-      c[field] = combineDateStr(year, month, day);
-    }
   }
 
   function updateCase(id, field, value) {
@@ -1394,17 +1244,7 @@
         </div>
         <div class="field-row">
           <span class="field-label">还款日</span>
-          <div class="field-input">
-            ${(() => { const d = parseDateStr(r.date); return `
-            <div class="date-group">
-              <input type="text" id="r-dateY-${r.id}" value="${d.year}" placeholder="年" maxlength="4" oninput="autoJumpYear(this,'r-dateM-${r.id}')" onchange="updateRepaymentDate(${r.id})" />
-              <span class="sep">年</span>
-              <input type="text" id="r-dateM-${r.id}" value="${d.month}" placeholder="月" maxlength="2" oninput="autoJumpMonth(this,'r-dateD-${r.id}')" onchange="updateRepaymentDate(${r.id})" />
-              <span class="sep">月</span>
-              <input type="text" id="r-dateD-${r.id}" value="${d.day}" placeholder="日" maxlength="2" onchange="updateRepaymentDate(${r.id})" />
-              <span class="sep">日</span>
-            </div>`; })()}
-          </div>
+          <div class="field-input"><input type="date" class="date-input" value="${r.date}" onchange="updateRepayment(${r.id}, 'date', this.value)" oninput="validateDateInput(this)" /></div>
         </div>
         <div class="field-row">
           <span class="field-label">还款额</span>
@@ -1412,16 +1252,6 @@
         </div>
       </div>
     `).join('');
-  }
-
-  // 更新还款日期字段
-  function updateRepaymentDate(id) {
-    const r = repayments.find(x => x.id === id);
-    if (!r) return;
-    const year = document.getElementById('r-dateY-' + id).value;
-    const month = document.getElementById('r-dateM-' + id).value;
-    const day = document.getElementById('r-dateD-' + id).value;
-    r.date = combineDateStr(year, month, day);
   }
 
   function updateRepayment(id, field, value) {
