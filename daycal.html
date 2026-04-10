@@ -257,17 +257,19 @@
         /* Quick Buttons */
         .quick-actions {
             display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
+            gap: 4px;
             margin-top: 14px;
+            justify-content: space-between;
         }
 
         .quick-btn {
-            padding: 8px 14px;
+            flex: 1;
+            padding: 8px 4px;
+            text-align: center;
             border: 1px solid var(--border-cream);
             background: var(--bg-white);
             border-radius: 20px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             color: var(--text-olive-gray);
             cursor: pointer;
@@ -506,7 +508,6 @@
                 <button class="quick-btn" onclick="quickDays(7)">7天</button>
                 <button class="quick-btn" onclick="quickDays(15)">15天</button>
                 <button class="quick-btn" onclick="quickDays(30)">30天</button>
-                <button class="quick-btn" onclick="quickDays(60)">60天</button>
                 <button class="quick-btn" onclick="quickDays(90)">90天</button>
                 <button class="quick-btn" onclick="quickDays(180)">180天</button>
                 <button class="quick-btn" onclick="quickDays(365)">365天</button>
