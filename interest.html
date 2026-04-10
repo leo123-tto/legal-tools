@@ -1071,37 +1071,47 @@
         result = formatMoney(principal * rate / 100 / 365 * days);
         detailHtml += `<div class="calc-step"><strong>本金 ${idx + 1}: ${formatMoney(principal)}</strong><br>起算日: ${p.startDate}，截止日: ${p.endDate}，共 ${days} 天<br><span class="formula">公式: ${formula}</span><br>利息: ${result}</div>`;
       } else {
-        // LPR利率 - 需要展示分段计算
+        // LPR利率 - 只在LPR变化时显示分段
         let lprDetails = '';
         let totalInterestCalc = 0;
         let currentDate = new Date(p.startDate);
         let currentRate = getLPRForDate(p.startDate, p.lprTerm) || 3.65;
+        let segStartDate = p.startDate;
+        let prevRate = currentRate;
 
         for (let i = 0; i < LPR_DATA.length; i++) {
           const lprDate = new Date(LPR_DATA[i].date);
           if (lprDate <= new Date(p.startDate)) continue;
           if (lprDate > new Date(p.endDate)) break;
 
-          const segDays = daysBetween(currentDate.toISOString().split('T')[0], lprDate.toISOString().split('T')[0]);
-          if (segDays > 0) {
-            const segInterest = principal * currentRate / 100 / 365 * segDays;
-            totalInterestCalc += segInterest;
-            lprDetails += `<div style="font-size:11px;padding-left:8px;opacity:0.8;">${currentDate.toISOString().split('T')[0]} ~ ${lprDate.toISOString().split('T')[0]}: LPR ${currentRate}% × ${segDays}天 = ${formatMoney(segInterest)}</div>`;
+          const newRate = p.lprTerm === '5y+' ? LPR_DATA[i].lpr5y : LPR_DATA[i].lpr1y;
+
+          // 如果利率变化了，说明前一段结束
+          if (Math.abs(newRate - prevRate) > 0.001) {
+            const segDays = daysBetween(segStartDate, lprDate.toISOString().split('T')[0]);
+            if (segDays > 0) {
+              const segInterest = principal * prevRate / 100 / 365 * segDays;
+              totalInterestCalc += segInterest;
+              lprDetails += `<div style="font-size:11px;padding-left:8px;opacity:0.8;">${segStartDate} ~ ${lprDate.toISOString().split('T')[0]}: LPR ${prevRate}% × ${segDays}天 = ${formatMoney(segInterest)}</div>`;
+            }
+            segStartDate = lprDate.toISOString().split('T')[0];
+            prevRate = newRate;
           }
+
           currentDate = lprDate;
-          currentRate = p.lprTerm === '5y+' ? LPR_DATA[i].lpr5y : LPR_DATA[i].lpr1y;
         }
 
-        const lastDays = daysBetween(currentDate.toISOString().split('T')[0], p.endDate);
+        // 最后一段
+        const lastDays = daysBetween(segStartDate, p.endDate);
         if (lastDays > 0) {
-          const lastInterest = principal * currentRate / 100 / 365 * lastDays;
+          const lastInterest = principal * prevRate / 100 / 365 * lastDays;
           totalInterestCalc += lastInterest;
-          lprDetails += `<div style="font-size:11px;padding-left:8px;opacity:0.8;">${currentDate.toISOString().split('T')[0]} ~ ${p.endDate}: LPR ${currentRate}% × ${lastDays}天 = ${formatMoney(lastInterest)}</div>`;
+          lprDetails += `<div style="font-size:11px;padding-left:8px;opacity:0.8;">${segStartDate} ~ ${p.endDate}: LPR ${prevRate}% × ${lastDays}天 = ${formatMoney(lastInterest)}</div>`;
         }
 
-        formula = `本金 ${principal}元，LPR利率，期间共 ${days} 天，按LPR分段计算`;
+        formula = `本金 ${principal}元，LPR利率，期间共 ${days} 天`;
         result = formatMoney(totalInterestCalc);
-        detailHtml += `<div class="calc-step"><strong>本金 ${idx + 1}: ${formatMoney(principal)}</strong><br>${formula}<br><span class="formula">${lprDetails}</span><br>小计: ${result}</div>`;
+        detailHtml += `<div class="calc-step"><strong>本金 ${idx + 1}: ${formatMoney(principal)}</strong><br>起算日: ${p.startDate}，截止日: ${p.endDate}，共 ${days} 天<br><span class="formula">${lprDetails}</span><br>小计: ${result}</div>`;
       }
     });
     document.getElementById('interest-calc-detail').innerHTML = detailHtml;
@@ -1387,12 +1397,14 @@
         caseDetails += `本金: ${formatMoney(cs.principal)}<br>`;
       }
       if (cs.normalInterest > 0) {
-        caseDetails += `一般利息: ${formatMoney(cs.normalInterest)} (${startDate} ~ ${endDate})<br>`;
+        // 显示利息计算过程
+        const rate = cs.rateType === 'lpr' ? getLPRForDate(startDate, cs.lprTerm) : parseFloat(cs.rate);
+        const rateDisplay = cs.rateType === 'lpr' ? (rate ? rate + '%(LPR)' : '—') : cs.rate + '%';
+        caseDetails += `一般利息: ${formatMoney(cs.normalInterest)} (${startDate} ~ ${endDate}, ${rateDisplay}, ${days}天)<br>`;
       }
       if (includeDelayedInterest && cs.doubleInterest > 0) {
         const delayedDays = daysBetween(cs.dueDate, cs.endDate || new Date().toISOString().split('T')[0]);
-        caseDetails += `迟延天数: ${delayedDays}天<br>`;
-        caseDetails += `加倍利息: ${formatMoney(cs.doubleInterest)} (本金 ${cs.principal} × 0.0175% × ${delayedDays}天)<br>`;
+        caseDetails += `加倍利息: ${formatMoney(cs.doubleInterest)} (本金 ${formatMoney(cs.principal)} × 0.0175% × ${delayedDays}天)<br>`;
       }
       if (cs.fees > 0) {
         caseDetails += `费用: ${formatMoney(cs.fees)}<br>`;
@@ -1404,8 +1416,70 @@
     // 处理还款抵扣的详情
     if (sortedRepayments.length > 0) {
       execDetailHtml += '<div class="calc-detail-title" style="margin-top:12px;">还款抵扣过程</div>';
-      for (const rep of sortedRepayments) {
-        execDetailHtml += `<div class="calc-step">${rep.date}: 还款 ${formatMoney(rep.amount)}</div>`;
+
+      // 模拟还款抵扣过程
+      const caseDataCopy = caseData.map(c => ({...c}));
+      const repaymentsCopy = sortedRepayments.map(r => ({
+        date: r.date,
+        amount: r.amount,
+        remaining: r.amount
+      }));
+
+      for (const rep of repaymentsCopy) {
+        let deductionDetails = `<div class="calc-step"><strong>${rep.date}: 还款 ${formatMoney(rep.amount)}</strong><br>`;
+        let remaining = rep.remaining;
+
+        for (const cs of caseDataCopy) {
+          if (remaining <= 0) break;
+
+          let deductions = [];
+          // 1. 扣费用
+          if (cs.fees > 0 && remaining > 0) {
+            const used = Math.min(cs.fees, remaining);
+            if (used > 0) {
+              deductions.push(`费用 ${formatMoney(used)}`);
+              cs.fees -= used;
+              remaining -= used;
+            }
+          }
+          // 2. 扣一般利息
+          if (cs.normalInterest > 0 && remaining > 0) {
+            const used = Math.min(cs.normalInterest, remaining);
+            if (used > 0) {
+              deductions.push(`一般利息 ${formatMoney(used)}`);
+              cs.normalInterest -= used;
+              remaining -= used;
+            }
+          }
+          // 3. 扣加倍利息
+          if (includeDelayedInterest && cs.doubleInterest > 0 && remaining > 0) {
+            const used = Math.min(cs.doubleInterest, remaining);
+            if (used > 0) {
+              deductions.push(`加倍利息 ${formatMoney(used)}`);
+              cs.doubleInterest -= used;
+              remaining -= used;
+            }
+          }
+          // 4. 扣本金
+          if (cs.principal > 0 && remaining > 0) {
+            const used = Math.min(cs.principal, remaining);
+            if (used > 0) {
+              deductions.push(`本金 ${formatMoney(used)}`);
+              cs.principal -= used;
+              remaining -= used;
+            }
+          }
+
+          if (deductions.length > 0) {
+            deductionDetails += `→ 抵扣 ${cs.name}: ${deductions.join(', ')}<br>`;
+          }
+        }
+
+        if (remaining > 0) {
+          deductionDetails += `→ 剩余 ${formatMoney(remaining)} 待分配<br>`;
+        }
+        deductionDetails += '</div>';
+        execDetailHtml += deductionDetails;
       }
     }
 
