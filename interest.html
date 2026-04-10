@@ -1250,16 +1250,13 @@
       const rate = c.rateType === 'lpr' ? getLPRForDate(startDate, c.lprTerm) : parseFloat(c.rate) || 0;
       const normalInterest = calculateInterestByPeriod(principal, startDate, endDate, c.rateType, c.rate, c.lprTerm);
 
-      // 迟延履行利息
-      let delayedInterest = 0;
+      // 迟延履行利息（加倍部分债务利息）
       let doubleInterest = 0;
       if (includeDelayedInterest && c.dueDate) {
         const dueDate = c.dueDate;
         const delayedEndDate = c.endDate || new Date().toISOString().split('T')[0];
         const delayedDays = daysBetween(dueDate, delayedEndDate);
         if (delayedDays > 0) {
-          // 一般债务利息（迟延期间）
-          delayedInterest = principal * (rate || getLPRForDate(dueDate, c.lprTerm) || 3.65) / 100 / 365 * delayedDays;
           // 加倍部分债务利息（日万分之1.75 = 0.0175% = 0.000175）
           doubleInterest = principal * 0.000175 * delayedDays;
         }
@@ -1275,7 +1272,6 @@
         name: c.name || '案件' + (caseData.length + 1),
         principal,
         normalInterest,
-        delayedInterest,
         doubleInterest,
         fees: totalFee,
         dueDate: c.dueDate,
@@ -1318,13 +1314,8 @@
           rep.remaining -= used;
         }
 
-        // 3. 再扣迟延履行利息（如果有）
+        // 3. 再扣加倍利息（迟延履行期间）
         if (includeDelayedInterest) {
-          if (cs.delayedInterest > 0 && rep.remaining > 0) {
-            const used = Math.min(cs.delayedInterest, rep.remaining);
-            cs.delayedInterest -= used;
-            rep.remaining -= used;
-          }
           if (cs.doubleInterest > 0 && rep.remaining > 0) {
             const used = Math.min(cs.doubleInterest, rep.remaining);
             cs.doubleInterest -= used;
@@ -1344,14 +1335,12 @@
     // 汇总结果
     let totalPrincipal = 0;
     let totalNormalInterest = 0;
-    let totalDelayedInterest = 0;
     let totalDoubleInterest = 0;
     let totalFees = 0;
 
     const breakdownHtml = caseData.map(cs => {
       totalPrincipal += cs.principal;
       totalNormalInterest += cs.normalInterest;
-      totalDelayedInterest += cs.delayedInterest;
       totalDoubleInterest += cs.doubleInterest;
       totalFees += cs.fees;
 
@@ -1362,13 +1351,8 @@
       if (cs.normalInterest > 0) {
         html += `<div class="result-row" style="padding-left:10px;"><span class="label">一般利息</span><span class="value">${formatMoney(cs.normalInterest)}</span></div>`;
       }
-      if (includeDelayedInterest) {
-        if (cs.delayedInterest > 0) {
-          html += `<div class="result-row" style="padding-left:10px;"><span class="label">迟延一般利息</span><span class="value">${formatMoney(cs.delayedInterest)}</span></div>`;
-        }
-        if (cs.doubleInterest > 0) {
-          html += `<div class="result-row" style="padding-left:10px;"><span class="label">加倍利息</span><span class="value">${formatMoney(cs.doubleInterest)}</span></div>`;
-        }
+      if (includeDelayedInterest && cs.doubleInterest > 0) {
+        html += `<div class="result-row" style="padding-left:10px;"><span class="label">加倍利息</span><span class="value">${formatMoney(cs.doubleInterest)}</span></div>`;
       }
       if (cs.fees > 0) {
         html += `<div class="result-row" style="padding-left:10px;"><span class="label">费用</span><span class="value">${formatMoney(cs.fees)}</span></div>`;
@@ -1376,7 +1360,7 @@
       return html;
     }).join('');
 
-    const total = totalPrincipal + totalNormalInterest + totalDelayedInterest + totalDoubleInterest + totalFees;
+    const total = totalPrincipal + totalNormalInterest + totalDoubleInterest + totalFees;
 
     // 显示结果
     document.getElementById('execution-placeholder').style.display = 'none';
@@ -1386,7 +1370,6 @@
     const detailRows = `
       ${totalPrincipal > 0 ? `<div class="result-row"><span class="label">本金</span><span class="value">${formatMoney(totalPrincipal)}</span></div>` : ''}
       ${totalNormalInterest > 0 ? `<div class="result-row"><span class="label">一般利息</span><span class="value">${formatMoney(totalNormalInterest)}</span></div>` : ''}
-      ${includeDelayedInterest && totalDelayedInterest > 0 ? `<div class="result-row"><span class="label">迟延利息</span><span class="value">${formatMoney(totalDelayedInterest)}</span></div>` : ''}
       ${includeDelayedInterest && totalDoubleInterest > 0 ? `<div class="result-row"><span class="label">加倍利息</span><span class="value">${formatMoney(totalDoubleInterest)}</span></div>` : ''}
       ${totalFees > 0 ? `<div class="result-row"><span class="label">费用</span><span class="value">${formatMoney(totalFees)}</span></div>` : ''}
     `;
@@ -1406,20 +1389,15 @@
       if (cs.normalInterest > 0) {
         caseDetails += `一般利息: ${formatMoney(cs.normalInterest)} (${startDate} ~ ${endDate})<br>`;
       }
-      if (includeDelayedInterest && (cs.delayedInterest > 0 || cs.doubleInterest > 0)) {
+      if (includeDelayedInterest && cs.doubleInterest > 0) {
         const delayedDays = daysBetween(cs.dueDate, cs.endDate || new Date().toISOString().split('T')[0]);
         caseDetails += `迟延天数: ${delayedDays}天<br>`;
-        if (cs.delayedInterest > 0) {
-          caseDetails += `迟延一般利息: ${formatMoney(cs.delayedInterest)}<br>`;
-        }
-        if (cs.doubleInterest > 0) {
-          caseDetails += `加倍利息: ${formatMoney(cs.doubleInterest)} (本金 ${cs.principal} × 0.0175% × ${delayedDays}天)<br>`;
-        }
+        caseDetails += `加倍利息: ${formatMoney(cs.doubleInterest)} (本金 ${cs.principal} × 0.0175% × ${delayedDays}天)<br>`;
       }
       if (cs.fees > 0) {
         caseDetails += `费用: ${formatMoney(cs.fees)}<br>`;
       }
-      caseDetails += `小计: ${formatMoney(cs.principal + cs.normalInterest + cs.delayedInterest + cs.doubleInterest + cs.fees)}</div>`;
+      caseDetails += `小计: ${formatMoney(cs.principal + cs.normalInterest + cs.doubleInterest + cs.fees)}</div>`;
       execDetailHtml += caseDetails;
     }
 
