@@ -141,6 +141,10 @@
 
         .field-row:last-child { margin-bottom: 0; }
 
+        .field-row:has(.days-input) {
+            flex-wrap: nowrap;
+        }
+
         .field-label {
             font-size: 13px;
             color: var(--text-stone-gray);
@@ -229,6 +233,8 @@
         /* Days Input */
         .days-input {
             flex: 1;
+            min-width: 0;
+            width: 0;
             height: 48px;
             border: 1px solid var(--border-cream);
             border-radius: var(--radius-lg);
@@ -401,6 +407,8 @@
         @media (max-width: 380px) {
             .field-label { min-width: 48px; font-size: 12px; }
             .result-main { font-size: 36px; }
+            .dir-btn { width: 40px; height: 40px; }
+            .days-input { font-size: 18px; }
         }
     </style>
 </head>
