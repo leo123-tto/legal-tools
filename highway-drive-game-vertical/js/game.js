@@ -938,20 +938,43 @@ const Game = {
         const ctx = this.ctx;
         const env = this.getEnvironment();
 
-        // 天空颜色 - 更柔和的渐变
+        // 天空颜色 - 更柔和的渐变，同时受天气影响
         let skyTop, skyBottom;
+        const weather = this.state.weather;
+
         if (env.timeOfDay === '清晨') {
-            skyTop = '#FFB347'; skyBottom = '#FFE4B5';
+            if (weather === '雨' || weather === '雪') {
+                skyTop = '#708090'; skyBottom = '#A9A9A9';
+            } else {
+                skyTop = '#FFB347'; skyBottom = '#FFE4B5';
+            }
         } else if (env.timeOfDay === '上午') {
-            skyTop = '#87CEEB'; skyBottom = '#B0E0E6';
+            if (weather === '雨') { skyTop = '#778899'; skyBottom = '#B0C4DE'; }
+            else if (weather === '雪') { skyTop = '#C0C0C0'; skyBottom = '#E8E8E8'; }
+            else if (weather === '阴') { skyTop = '#696969'; skyBottom = '#A9A9A9'; }
+            else { skyTop = '#87CEEB'; skyBottom = '#B0E0E6'; }
         } else if (env.timeOfDay === '中午') {
-            skyTop = '#87CEEB'; skyBottom = '#E0F7FA';
+            if (weather === '雨') { skyTop = '#6A8CAD'; skyBottom = '#9DB6CD'; }
+            else if (weather === '雪') { skyTop = '#D3D3D3'; skyBottom = '#F0F0F0'; }
+            else if (weather === '阴') { skyTop = '#808080'; skyBottom = '#C0C0C0'; }
+            else { skyTop = '#87CEEB'; skyBottom = '#E0F7FA'; }
         } else if (env.timeOfDay === '下午') {
-            skyTop = '#87CEEB'; skyBottom = '#FFEFD5';
+            if (weather === '雨') { skyTop = '#708090'; skyBottom = '#B0C4DE'; }
+            else if (weather === '雪') { skyTop = '#B8B8B8'; skyBottom = '#DCDCDC'; }
+            else if (weather === '阴') { skyTop = '#696969'; skyBottom = '#A9A9A9'; }
+            else { skyTop = '#87CEEB'; skyBottom = '#FFEFD5'; }
         } else if (env.timeOfDay === '黄昏') {
-            skyTop = '#FF6347'; skyBottom = '#FFA07A';
+            if (weather === '雨' || weather === '雪') {
+                skyTop = '#4A4A4A'; skyBottom = '#8B7355';
+            } else {
+                skyTop = '#FF6347'; skyBottom = '#FFA07A';
+            }
         } else if (env.timeOfDay === '夜晚') {
-            skyTop = '#191970'; skyBottom = '#0F0F23';
+            if (weather === '雨' || weather === '雪') {
+                skyTop = '#1a1a2e'; skyBottom = '#2d2d44';
+            } else {
+                skyTop = '#191970'; skyBottom = '#0F0F23';
+            }
         }
 
         // 天空渐变
@@ -993,21 +1016,21 @@ const Game = {
         ctx.fillRect(0, 0, this.road.roadLeft, this.canvas.height);
         ctx.fillRect(this.road.roadRight, 0, this.canvas.width - this.road.roadRight, this.canvas.height);
 
-        // 草地纹理 - 使用固定位置避免闪烁
+        // 草地纹理 - 动态移动效果更明显
         ctx.fillStyle = '#228B22';
-        const grassOffset = Math.floor(this.state.backgroundOffset * 0.5) % 30;
-        for (let i = 0; i < 40; i++) {
+        const grassOffset = Math.floor(this.state.backgroundOffset * 0.8);  // 加快移动速度
+        for (let i = 0; i < 60; i++) {  // 增加草丛数量
             // 左侧草地
-            const gx1 = (i * 37 + 15) % this.road.roadLeft;
-            const gy1 = ((i * 23 + grassOffset) % this.canvas.height + this.canvas.height) % this.canvas.height;
-            ctx.fillRect(gx1, gy1, 3, 6);
-            ctx.fillRect(gx1 + 8, gy1 + 3, 3, 5);
+            const gx1 = (i * 29 + 12) % this.road.roadLeft;
+            const gy1 = ((i * 41 + grassOffset) % (this.canvas.height + 60) - 30);
+            ctx.fillRect(gx1, gy1, 3, 8);  // 加长草丛
+            ctx.fillRect(gx1 + 10, gy1 + 2, 3, 6);
 
             // 右侧草地
-            const gx2 = this.road.roadRight + 10 + (i * 31 % (this.canvas.width - this.road.roadRight - 15));
-            const gy2 = ((i * 19 + grassOffset + 10) % this.canvas.height + this.canvas.height) % this.canvas.height;
-            ctx.fillRect(gx2, gy2, 3, 6);
-            ctx.fillRect(gx2 + 8, gy2 + 3, 3, 5);
+            const gx2 = this.road.roadRight + 8 + (i * 37 % (this.canvas.width - this.road.roadRight - 12));
+            const gy2 = ((i * 31 + grassOffset + 25) % (this.canvas.height + 60) - 30);
+            ctx.fillRect(gx2, gy2, 3, 8);
+            ctx.fillRect(gx2 + 10, gy2 + 2, 3, 6);
         }
 
         // 路边树木 - 间隔出现
@@ -1234,6 +1257,12 @@ const Game = {
         const x = this.state.playerX - w/2;
         const y = this.state.playerY - h/2;
 
+        // 无敌状态闪烁效果
+        if (this.state.collisionCooldown > 0 && Math.floor(this.state.collisionCooldown / 10) % 2 === 0) {
+            // 无敌时闪烁，稍微透明
+            ctx.globalAlpha = 0.5;
+        }
+
         // 阴影
         ctx.fillStyle = 'rgba(0,0,0,0.3)';
         ctx.fillRect(x + 4, y + 4, w, h);
@@ -1276,6 +1305,9 @@ const Game = {
         ctx.fillRect(x + w - 2, y + 10, 5, 14);
         ctx.fillRect(x - 3, y + h - 24, 5, 14);
         ctx.fillRect(x + w - 2, y + h - 24, 5, 14);
+
+        // 恢复透明度
+        ctx.globalAlpha = 1.0;
     },
 
     // 绘制NPC车辆（俯视图，更精致）
