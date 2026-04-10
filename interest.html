@@ -1,0 +1,1548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>利息/执行款计算器 - 法律工具集</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      /* 色彩 - Claude Design System */
+      /* 页面背景 */
+      --bg-parchment: #f5f4ed;
+      /* 卡片背景 */
+      --bg-ivory: #faf9f5;
+      --bg-white: #ffffff;
+      /* 品牌色 */
+      --brand-terracotta: #c96442;
+      --brand-coral: #d97757;
+      /* 文字 */
+      --text-near-black: #141413;
+      --text-olive-gray: #5e5d59;
+      --text-stone-gray: #87867f;
+      --text-dark-warm: #3d3d3a;
+      /* 边框 */
+      --border-cream: #f0eee6;
+      --border-warm: #e8e6dc;
+      /* 其他 */
+      --ring-warm: #d1cfc5;
+      --ring-subtle: #dedc01;
+      --focus-blue: #3898ec;
+      --error-crimson: #b53333;
+      /* 阴影 */
+      --shadow-whisper: rgba(0,0,0,0.05) 0px 4px 24px;
+    }
+
+    html, body {
+      min-height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+      background: var(--bg-parchment);
+      color: var(--text-near-black);
+      font-size: 16px;
+      line-height: 1.60;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body { min-height: 100vh; padding-bottom: 40px; }
+
+    .header {
+      padding: 18px 20px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--brand-terracotta);
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 500;
+      padding: 6px 10px 6px 4px;
+      border-radius: 8px;
+      transition: background .15s;
+    }
+    .back-link:active { background: rgba(201,100,66,0.1); }
+    .back-link svg { flex-shrink: 0; }
+
+    .page-title {
+      font-family: -apple-system, "Songti SC", "SimSun", Georgia, serif;
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--text-near-black);
+      letter-spacing: .02em;
+    }
+
+    .main {
+      padding: 18px 16px 0;
+      max-width: 520px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .main > * + * {
+      margin-top: 18px;
+    }
+
+    .card {
+      background: var(--bg-ivory);
+      border: 1px solid var(--border-cream);
+      border-radius: 8px;
+      box-shadow: var(--shadow-whisper);
+      padding: 18px 18px;
+    }
+
+    /* 功能切换 */
+    .segment-wrap {
+      display: flex;
+      background: var(--border-warm);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .seg-btn {
+      flex: 1;
+      padding: 10px 0;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-olive-gray);
+      cursor: pointer;
+      transition: background .18s, color .18s, box-shadow .18s;
+    }
+
+    .seg-btn.active {
+      background: var(--bg-white);
+      color: var(--brand-terracotta);
+      box-shadow: 0px 0px 0px 1px var(--ring-warm);
+    }
+
+    .section-label {
+      font-family: -apple-system, "Songti SC", "SimSun", Georgia, serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-near-black);
+      margin-bottom: 8px;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 2px;
+    }
+
+    .input-wrap {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .amount-input {
+      width: 100%;
+      height: 52px;
+      border: 1px solid var(--border-cream);
+      border-radius: 12px;
+      padding: 0 60px 0 16px;
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--text-near-black);
+      background: var(--bg-white);
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .amount-input:focus {
+      border-color: var(--focus-blue);
+      box-shadow: 0px 0px 0px 3px rgba(56,152,236,0.15);
+    }
+
+    .amount-input::placeholder { color: var(--text-stone-gray); font-weight: 400; font-size: 16px; }
+
+    .input-unit {
+      position: absolute;
+      right: 14px;
+      font-size: 13px;
+      color: var(--text-stone-gray);
+      font-weight: 500;
+      pointer-events: none;
+    }
+
+    /* 按钮 */
+    .btn {
+      height: 44px;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: var(--brand-terracotta);
+      color: var(--bg-white);
+      box-shadow: 0px 0px 0px 1px var(--brand-terracotta);
+    }
+    .btn-primary:active { transform: scale(.98); }
+
+    .btn-secondary {
+      background: var(--border-warm);
+      color: var(--text-near-black);
+    }
+    .btn-secondary:active { background: var(--border-cream); }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border-cream);
+      color: var(--text-olive-gray);
+    }
+    .btn-outline:active { background: var(--border-warm); }
+
+    /* 项目卡片 */
+    .item-card {
+      background: var(--bg-white);
+      border: 1px solid var(--border-cream);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .item-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-near-black);
+    }
+
+    .item-delete {
+      width: 26px;
+      height: 26px;
+      border: none;
+      background: rgba(181, 51, 51, 0.08);
+      color: var(--error-crimson);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .item-delete:active { background: rgba(181, 51, 51, 0.15); }
+
+    .inline-inputs {
+      display: flex;
+      gap: 8px;
+    }
+
+    .inline-inputs .input-wrap {
+      flex: 1;
+    }
+
+    .inline-inputs .amount-input {
+      height: 44px;
+      font-size: 16px;
+      padding: 0 40px 0 12px;
+    }
+
+    .inline-inputs .input-unit {
+      right: 10px;
+      font-size: 12px;
+    }
+
+    /* 日期输入 */
+    .date-input {
+      width: 100%;
+      height: 44px;
+      border: 1px solid var(--border-cream);
+      border-radius: 12px;
+      padding: 0 12px;
+      font-size: 16px;
+      color: var(--text-near-black);
+      background: var(--bg-white);
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .date-input:focus {
+      border-color: var(--focus-blue);
+      box-shadow: 0px 0px 0px 3px rgba(56,152,236,0.15);
+    }
+
+    /* 行内标签+输入 */
+    .field-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .field-row:last-child { margin-bottom: 0; }
+
+    .field-label {
+      font-size: 13px;
+      color: var(--text-olive-gray);
+      white-space: nowrap;
+      min-width: 50px;
+    }
+
+    .field-input {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* 结果卡片 */
+    .result-card {
+      background: var(--brand-terracotta);
+      border-radius: 12px;
+      box-shadow: var(--shadow-whisper);
+      padding: 20px 20px 18px;
+      color: var(--bg-white);
+      display: none;
+    }
+
+    .result-card.visible { display: block; }
+
+    .result-title {
+      font-family: -apple-system, "Songti SC", "SimSun", Georgia, serif;
+      font-size: 13px;
+      font-weight: 500;
+      opacity: .85;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .result-main {
+      font-family: -apple-system, "Songti SC", "SimSun", Georgia, serif;
+      font-size: 36px;
+      font-weight: 500;
+      letter-spacing: -.01em;
+      line-height: 1.1;
+      margin-bottom: 2px;
+    }
+
+    .result-sub {
+      font-size: 13px;
+      opacity: .8;
+      margin-bottom: 14px;
+    }
+
+    .result-breakdown {
+      background: rgba(255,255,255,.15);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+    }
+
+    .result-row .label { opacity: .9; }
+    .result-row .value { font-weight: 500; }
+
+    /* 计算过程 */
+    .calc-detail {
+      margin-top: 14px;
+      background: rgba(255,255,255,.12);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: none;
+    }
+    .calc-detail.visible { display: block; }
+    .calc-detail-title {
+      font-family: -apple-system, "Songti SC", "SimSun", Georgia, serif;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      opacity: .9;
+    }
+    .calc-step {
+      font-size: 12.5px;
+      line-height: 1.6;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,.1);
+    }
+    .calc-step:last-child { border-bottom: none; }
+    .calc-step .formula { font-family: monospace; font-size: 12px; opacity: .85; }
+    .calc-toggle-btn {
+      display: block;
+      width: 100%;
+      margin-top: 12px;
+      padding: 10px;
+      background: rgba(255,255,255,.15);
+      border: none;
+      border-radius: 8px;
+      color: var(--bg-white);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: center;
+    }
+    .calc-toggle-btn:active { background: rgba(255,255,255,.25); }
+
+    /* 占位 */
+    .placeholder-card {
+      background: var(--bg-ivory);
+      border: 1px solid var(--border-cream);
+      border-radius: 8px;
+      box-shadow: var(--shadow-whisper);
+      padding: 28px 20px;
+      text-align: center;
+      color: var(--text-olive-gray);
+      font-size: 14px;
+    }
+
+    .placeholder-icon {
+      font-size: 36px;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    /* 法律依据链接 */
+    .basis-link-wrap {
+      text-align: center;
+      padding: 4px 0 2px;
+    }
+
+    .basis-link {
+      color: var(--brand-terracotta);
+      font-size: 13px;
+      text-decoration: none;
+      border-bottom: 1px dashed var(--brand-coral);
+      padding-bottom: 1px;
+      cursor: pointer;
+    }
+
+    /* 底部 */
+    .footer {
+      text-align: center;
+      color: var(--text-stone-gray);
+      font-size: 12px;
+      padding: 24px 20px 0;
+      max-width: 520px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* 弹窗 */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal {
+      background: var(--bg-ivory);
+      border-radius: 12px 12px 0 0;
+      width: 100%;
+      max-width: 520px;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 0 0 env(safe-area-inset-bottom, 16px);
+      transform: translateY(100%);
+      transition: transform .3s cubic-bezier(.4,0,.2,1);
+    }
+
+    .modal-overlay.open .modal {
+      transform: translateY(0);
+    }
+
+    .modal-header {
+      position: sticky;
+      top: 0;
+      background: var(--bg-ivory);
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--border-cream);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-family: -apple-system, "Songti SC", "SimSun", Georgia, serif;
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text-near-black);
+    }
+
+    .modal-close {
+      width: 30px;
+      height: 30px;
+      border: none;
+      background: var(--border-warm);
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-olive-gray);
+      font-size: 16px;
+    }
+
+    .modal-body {
+      padding: 16px 20px 20px;
+      font-size: 13.5px;
+      color: var(--text-near-black);
+      line-height: 1.75;
+    }
+
+    .modal-body h3 {
+      font-family: -apple-system, "Songti SC", "SimSun", Georgia, serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--brand-terracotta);
+      margin: 14px 0 6px;
+    }
+
+    .modal-body h3:first-child { margin-top: 0; }
+
+    .modal-body p { margin-bottom: 6px; color: var(--text-dark-warm); }
+
+    .law-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0;
+      font-size: 12.5px;
+    }
+
+    .law-table th {
+      background: var(--border-warm);
+      color: var(--brand-terracotta);
+      font-weight: 500;
+      padding: 6px 8px;
+      text-align: left;
+    }
+
+    .law-table td {
+      padding: 6px 8px;
+      border-bottom: 1px solid var(--border-cream);
+    }
+
+    .law-table tr:nth-child(even) td { background: rgba(232,230,220,0.5); }
+
+    .hint {
+      font-size: 12px;
+      color: var(--text-stone-gray);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    /* 小提示 */
+    .tip {
+      font-size: 11px;
+      color: var(--text-stone-gray);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    /* 切换开关 */
+    .divider { height: 1px; background: var(--border-cream); margin: 12px 0; }
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 0;
+    }
+    .toggle-label { font-size: 15px; color: var(--text-near-black); font-weight: 500; }
+    .toggle-desc { font-size: 12px; color: var(--text-stone-gray); margin-top: 1px; }
+    .ios-toggle { position: relative; width: 50px; height: 30px; flex-shrink: 0; }
+    .ios-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .ios-toggle-track { position: absolute; inset: 0; background: var(--border-warm); border-radius: 15px; cursor: pointer; transition: background .2s; }
+    .ios-toggle input:checked + .ios-toggle-track { background: var(--brand-terracotta); }
+    .ios-toggle-track::after {
+      content: ''; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px;
+      background: var(--bg-white); border-radius: 50%; box-shadow: 0 1px 4px rgba(0,0,0,.18);
+      transition: transform .2s;
+    }
+    .ios-toggle input:checked + .ios-toggle-track::after { transform: translateX(20px); }
+
+    @media (min-width: 520px) {
+      .header { padding: 24px 24px 0; max-width: 520px; margin: 0 auto; }
+      .main { padding: 20px 24px 0; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <a href="index.html" class="back-link" aria-label="返回">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="15 18 9 12 15 6"/>
+    </svg>
+    返回
+  </a>
+  <h1 class="page-title">利息/执行款计算器</h1>
+</div>
+
+<div class="main">
+
+  <!-- 功能切换 -->
+  <div class="card">
+    <div class="segment-wrap">
+      <button class="seg-btn active" id="seg-interest" onclick="switchMode('interest')">利息计算</button>
+      <button class="seg-btn" id="seg-execution" onclick="switchMode('execution')">执行款计算</button>
+    </div>
+  </div>
+
+  <!-- 利息计算模式 -->
+  <div id="panel-interest">
+    <!-- 本金列表 -->
+    <div class="card">
+      <div class="section-label">本金明细</div>
+      <div id="interest-principals"></div>
+      <button class="btn btn-outline" style="width:100%; margin-top:18px;" onclick="addInterestPrincipal()">+ 添加本金</button>
+    </div>
+
+    <!-- 结果占位 - 在计算按钮之前显示 -->
+    <div class="placeholder-card" id="interest-placeholder">
+      <span class="placeholder-icon">💰</span>
+      <div>添加本金后点击计算按钮</div>
+    </div>
+
+    <!-- 计算按钮 -->
+    <button class="btn btn-primary" style="width:100%;" onclick="calculateInterest()">计算利息</button>
+
+    <!-- 结果 -->
+    <div class="result-card" id="interest-result">
+      <div class="result-title">计算结果</div>
+      <div class="result-main" id="interest-total">—</div>
+      <div class="result-sub">总利息</div>
+      <div class="result-breakdown" id="interest-breakdown"></div>
+      <button class="calc-toggle-btn" onclick="toggleCalcDetail('interest')">查看计算过程</button>
+      <div class="calc-detail" id="interest-calc-detail"></div>
+    </div>
+
+    <div class="basis-link-wrap">
+      <a class="basis-link" onclick="openModal('interest')">查看利息计算法律依据</a>
+    </div>
+  </div>
+
+  <!-- 执行款计算模式 -->
+  <div id="panel-execution" style="display:none;">
+    <!-- 多案切换 -->
+    <div class="card" style="padding:12px;">
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">多案合并计算</div>
+          <div class="toggle-desc">多个案件合并计算还款抵扣</div>
+        </div>
+        <label class="ios-toggle">
+          <input type="checkbox" id="multi-case" onchange="toggleMultiCase()" />
+          <div class="ios-toggle-track"></div>
+        </label>
+      </div>
+    </div>
+
+    <!-- 案件列表 -->
+    <div class="card">
+      <div class="section-label">案件明细</div>
+      <div id="case-list"></div>
+      <button class="btn btn-outline" style="width:100%; margin-top:18px;" onclick="addCase()">+ 添加案件</button>
+    </div>
+
+    <!-- 还款记录 -->
+    <div class="card" style="margin-top:18px;">
+      <div class="section-label">还款记录</div>
+      <div id="repayment-list"></div>
+      <button class="btn btn-outline" style="width:100%; margin-top:18px;" onclick="addRepayment()">+ 添加还款</button>
+    </div>
+
+    <!-- 迟延履行选项 -->
+    <div class="card" style="padding:12px; margin-top:18px;">
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">计算迟延履行利息</div>
+          <div class="toggle-desc">根据民事诉讼法第260条</div>
+        </div>
+        <label class="ios-toggle">
+          <input type="checkbox" id="delayed-interest" onchange="calculateExecution()" />
+          <div class="ios-toggle-track"></div>
+        </label>
+      </div>
+    </div>
+
+    <!-- 计算按钮 -->
+    <button class="btn btn-primary" style="width:100%; margin-top:18px;" onclick="calculateExecution()">计算执行款</button>
+
+    <!-- 结果 -->
+    <div class="placeholder-card" id="execution-placeholder">
+      <span class="placeholder-icon">📋</span>
+      <div>添加案件后点击计算按钮</div>
+    </div>
+
+    <div class="result-card" id="execution-result">
+      <div class="result-title">计算结果</div>
+      <div class="result-main" id="execution-total">—</div>
+      <div class="result-sub">待执行款合计</div>
+      <div class="result-breakdown" id="execution-breakdown"></div>
+      <button class="calc-toggle-btn" onclick="toggleCalcDetail('execution')">查看计算过程</button>
+      <div class="calc-detail" id="execution-calc-detail"></div>
+    </div>
+
+    <div class="basis-link-wrap">
+      <a class="basis-link" onclick="openModal('execution')">查看执行款计算法律依据</a>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <div>江苏漫修（无锡）律师事务所 刘成律师</div>
+</div>
+
+<!-- 弹窗 -->
+<div class="modal-overlay" id="modal-overlay" onclick="onOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">法律依据</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-content"></div>
+  </div>
+</div>
+
+<script>
+  // ===== LPR 历史数据 =====
+  // 格式: { date: 'YYYY-MM-DD', lpr1y: x.xx, lpr5y: x.xx }
+  const LPR_DATA = [
+    { date: '2019-08-20', lpr1y: 4.25, lpr5y: 4.85 },
+    { date: '2019-09-20', lpr1y: 4.20, lpr5y: 4.85 },
+    { date: '2019-10-21', lpr1y: 4.20, lpr5y: 4.85 },
+    { date: '2019-11-20', lpr1y: 4.15, lpr5y: 4.80 },
+    { date: '2019-12-20', lpr1y: 4.15, lpr5y: 4.80 },
+    { date: '2020-01-20', lpr1y: 4.15, lpr5y: 4.80 },
+    { date: '2020-02-20', lpr1y: 4.05, lpr5y: 4.75 },
+    { date: '2020-03-20', lpr1y: 4.05, lpr5y: 4.75 },
+    { date: '2020-04-20', lpr1y: 3.85, lpr5y: 4.65 },
+    { date: '2020-05-20', lpr1y: 3.85, lpr5y: 4.65 },
+    { date: '2020-06-20', lpr1y: 3.85, lpr5y: 4.65 },
+    { date: '2020-07-20', lpr1y: 3.85, lpr5y: 4.65 },
+    { date: '2020-08-20', lpr1y: 3.85, lpr5y: 4.65 },
+    { date: '2020-09-20', lpr1y: 3.85, lpr5y: 4.65 },
+    { date: '2020-10-20', lpr1y: 3.85, lpr5y: 4.65 },
+    { date: '2020-11-20', lpr1y: 3.85, lpr5y: 4.65 },
+    { date: '2020-12-21', lpr1y: 3.85, lpr5y: 4.65 },
+    { date: '2021-01-20', lpr1y: 3.85, lpr5y: 4.65 },
+    { date: '2021-02-20', lpr1y: 3.85, lpr5y: 4.65 },
+    { date: '2021-03-22', lpr1y: 3.85, lpr5y: 4.65 },
+    { date: '2021-04-20', lpr1y: 3.85, lpr5y: 4.65 },
+    { date: '2021-05-20', lpr1y: 3.85, lpr5y: 4.65 },
+    { date: '2021-06-21', lpr1y: 3.85, lpr5y: 4.65 },
+    { date: '2021-07-20', lpr1y: 3.85, lpr5y: 4.65 },
+    { date: '2021-08-20', lpr1y: 3.85, lpr5y: 4.65 },
+    { date: '2021-09-20', lpr1y: 3.85, lpr5y: 4.65 },
+    { date: '2021-10-20', lpr1y: 3.85, lpr5y: 4.65 },
+    { date: '2021-11-22', lpr1y: 3.85, lpr5y: 4.65 },
+    { date: '2021-12-20', lpr1y: 3.80, lpr5y: 4.65 },
+    { date: '2022-01-20', lpr1y: 3.70, lpr5y: 4.60 },
+    { date: '2022-02-21', lpr1y: 3.70, lpr5y: 4.60 },
+    { date: '2022-03-21', lpr1y: 3.70, lpr5y: 4.60 },
+    { date: '2022-04-20', lpr1y: 3.70, lpr5y: 4.60 },
+    { date: '2022-05-20', lpr1y: 3.70, lpr5y: 4.45 },
+    { date: '2022-06-20', lpr1y: 3.70, lpr5y: 4.45 },
+    { date: '2022-07-20', lpr1y: 3.70, lpr5y: 4.45 },
+    { date: '2022-08-22', lpr1y: 3.65, lpr5y: 4.30 },
+    { date: '2022-09-20', lpr1y: 3.65, lpr5y: 4.30 },
+    { date: '2022-10-20', lpr1y: 3.65, lpr5y: 4.30 },
+    { date: '2022-11-21', lpr1y: 3.65, lpr5y: 4.30 },
+    { date: '2022-12-20', lpr1y: 3.65, lpr5y: 4.30 },
+    { date: '2023-01-20', lpr1y: 3.65, lpr5y: 4.30 },
+    { date: '2023-02-20', lpr1y: 3.65, lpr5y: 4.30 },
+    { date: '2023-03-20', lpr1y: 3.65, lpr5y: 4.30 },
+    { date: '2023-04-20', lpr1y: 3.65, lpr5y: 4.30 },
+    { date: '2023-05-22', lpr1y: 3.65, lpr5y: 4.30 },
+    { date: '2023-06-20', lpr1y: 3.55, lpr5y: 4.20 },
+    { date: '2023-07-20', lpr1y: 3.55, lpr5y: 4.20 },
+    { date: '2023-08-21', lpr1y: 3.45, lpr5y: 4.20 },
+    { date: '2023-09-20', lpr1y: 3.45, lpr5y: 4.20 },
+    { date: '2023-10-20', lpr1y: 3.45, lpr5y: 4.20 },
+    { date: '2023-11-20', lpr1y: 3.45, lpr5y: 4.20 },
+    { date: '2023-12-20', lpr1y: 3.45, lpr5y: 4.20 },
+    { date: '2024-01-22', lpr1y: 3.45, lpr5y: 4.20 },
+    { date: '2024-02-20', lpr1y: 3.45, lpr5y: 3.95 },
+    { date: '2024-03-20', lpr1y: 3.45, lpr5y: 3.95 },
+    { date: '2024-04-20', lpr1y: 3.45, lpr5y: 3.95 },
+    { date: '2024-05-20', lpr1y: 3.45, lpr5y: 3.95 },
+    { date: '2024-06-20', lpr1y: 3.45, lpr5y: 3.95 },
+    { date: '2024-07-22', lpr1y: 3.35, lpr5y: 3.85 },
+    { date: '2024-08-20', lpr1y: 3.35, lpr5y: 3.85 },
+    { date: '2024-09-20', lpr1y: 3.35, lpr5y: 3.85 },
+    { date: '2024-10-20', lpr1y: 3.10, lpr5y: 3.60 },
+    { date: '2024-11-20', lpr1y: 3.10, lpr5y: 3.60 },
+    { date: '2024-12-20', lpr1y: 3.10, lpr5y: 3.60 },
+    { date: '2025-01-20', lpr1y: 3.10, lpr5y: 3.60 },
+    { date: '2025-02-20', lpr1y: 3.10, lpr5y: 3.60 },
+    { date: '2025-03-20', lpr1y: 3.10, lpr5y: 3.60 },
+    { date: '2025-04-21', lpr1y: 3.10, lpr5y: 3.60 },
+    { date: '2025-05-20', lpr1y: 3.10, lpr5y: 3.60 },
+    { date: '2025-06-20', lpr1y: 3.00, lpr5y: 3.50 },
+    { date: '2025-07-21', lpr1y: 3.00, lpr5y: 3.50 },
+    { date: '2025-08-20', lpr1y: 3.00, lpr5y: 3.50 },
+    { date: '2025-09-22', lpr1y: 3.00, lpr5y: 3.50 },
+    { date: '2025-10-20', lpr1y: 3.00, lpr5y: 3.50 },
+    { date: '2025-11-20', lpr1y: 3.00, lpr5y: 3.50 },
+    { date: '2025-12-22', lpr1y: 3.00, lpr5y: 3.50 },
+    { date: '2026-01-20', lpr1y: 3.00, lpr5y: 3.50 },
+    { date: '2026-02-24', lpr1y: 3.00, lpr5y: 3.50 },
+    { date: '2026-03-20', lpr1y: 3.00, lpr5y: 3.50 }
+  ];
+
+  // 获取指定日期对应的LPR利率
+  function getLPRForDate(dateStr, term) {
+    if (!dateStr) return null;
+    const targetDate = new Date(dateStr);
+    let lpr = null;
+    for (const item of LPR_DATA) {
+      const lprDate = new Date(item.date);
+      if (lprDate <= targetDate) {
+        lpr = term === '5y+' ? item.lpr5y : item.lpr1y;
+      } else {
+        break;
+      }
+    }
+    return lpr;
+  }
+
+  // 计算两个日期之间的天数
+  function daysBetween(startDate, endDate) {
+    if (!startDate || !endDate) return 0;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = end - start;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  }
+
+  // 计算单笔利息（按时间段分段，使用分段期间对应的LPR）
+  function calculateInterestByPeriod(principal, startDate, endDate, rateType, customRate, lprTerm) {
+    if (!principal || !startDate || !endDate) return 0;
+    const principalNum = parseFloat(principal);
+    if (isNaN(principalNum) || principalNum <= 0) return 0;
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (end <= start) return 0;
+
+    // 自定义利率直接计算
+    if (rateType === 'custom') {
+      const rate = parseFloat(customRate);
+      if (!rate || isNaN(rate)) return 0;
+      const days = daysBetween(startDate, endDate);
+      const interest = principalNum * rate / 100 / 365 * days;
+      return Math.round(interest * 100) / 100;
+    }
+
+    // LPR利率：按LPR变化点分段计算
+    let totalInterest = 0;
+    let currentDate = new Date(start);
+
+    // 找到起始日期对应的LPR
+    let currentRate = getLPRForDate(startDate, lprTerm);
+    if (!currentRate) currentRate = 3.65; // 默认值
+
+    // 遍历所有LPR变化点
+    for (let i = 0; i < LPR_DATA.length; i++) {
+      const lprDate = new Date(LPR_DATA[i].date);
+
+      // 如果LPR日期在起始日期之前，继续
+      if (lprDate <= start) continue;
+
+      // 如果LPR日期在结束日期之后，退出循环
+      if (lprDate > end) break;
+
+      // 计算这一段的利息
+      const segmentStart = currentDate.toISOString().split('T')[0];
+      const segmentEnd = lprDate.toISOString().split('T')[0];
+      const segmentDays = daysBetween(segmentStart, segmentEnd);
+
+      if (segmentDays > 0) {
+        totalInterest += principalNum * currentRate / 100 / 365 * segmentDays;
+      }
+
+      // 更新当前日期和利率
+      currentDate = lprDate;
+      currentRate = lprTerm === '5y+' ? LPR_DATA[i].lpr5y : LPR_DATA[i].lpr1y;
+    }
+
+    // 计算最后一段（从最后一个LPR变化点到endDate）
+    const lastSegmentDays = daysBetween(currentDate.toISOString().split('T')[0], endDate);
+    if (lastSegmentDays > 0 && currentRate) {
+      totalInterest += principalNum * currentRate / 100 / 365 * lastSegmentDays;
+    }
+
+    return Math.round(totalInterest * 100) / 100;
+  }
+
+  // 格式化金额
+  function formatMoney(amount) {
+    if (amount >= 10000) {
+      return (amount / 10000).toFixed(2) + ' 万元';
+    }
+    return amount.toFixed(2) + ' 元';
+  }
+
+  // 状态
+  let currentMode = 'interest';
+  let interestPrincipals = [];
+  let cases = [];
+  let repayments = [];
+  let isMultiCase = false;
+
+  // 初始化
+  function init() {
+    addInterestPrincipal();
+    addCase();
+  }
+
+  // 切换模式
+  function switchMode(mode) {
+    currentMode = mode;
+    document.getElementById('panel-interest').style.display = mode === 'interest' ? '' : 'none';
+    document.getElementById('panel-execution').style.display = mode === 'execution' ? '' : 'none';
+    document.getElementById('seg-interest').classList.toggle('active', mode === 'interest');
+    document.getElementById('seg-execution').classList.toggle('active', mode === 'execution');
+  }
+
+  // 利息计算 - 添加本金
+  function addInterestPrincipal() {
+    const id = Date.now();
+    const today = new Date().toISOString().split('T')[0];
+    interestPrincipals.push({
+      id,
+      principal: '',
+      rate: '',
+      rateType: 'lpr', // lpr or custom
+      lprTerm: '1y',   // 1y or 5y+
+      startDate: '',
+      endDate: today
+    });
+    renderInterestPrincipals();
+  }
+
+  function removeInterestPrincipal(id) {
+    interestPrincipals = interestPrincipals.filter(p => p.id !== id);
+    renderInterestPrincipals();
+  }
+
+  function renderInterestPrincipals() {
+    const container = document.getElementById('interest-principals');
+    container.innerHTML = interestPrincipals.map((p, idx) => `
+      <div class="item-card">
+        <div class="item-header">
+          <span class="item-title">本金 ${idx + 1}</span>
+          ${interestPrincipals.length > 1 ? `<button class="item-delete" onclick="removeInterestPrincipal(${p.id})">✕</button>` : ''}
+        </div>
+        <div class="field-row">
+          <span class="field-label">本金</span>
+          <div class="field-input">
+            <input type="number" class="date-input" value="${p.principal}" placeholder="借款金额" onchange="updateInterestPrincipal(${p.id}, 'principal', this.value)" />
+          </div>
+        </div>
+        <div class="field-row">
+          <span class="field-label">利率</span>
+          <div class="field-input" style="display:flex;gap:6px;">
+            <select style="flex:1;height:44px;border:1px solid var(--border-cream);border-radius:12px;padding:0 8px;font-size:14px;background:var(--bg-white);color:var(--text-near-black);" onchange="updateInterestPrincipal(${p.id}, 'rateType', this.value)">
+              <option value="lpr" ${p.rateType === 'lpr' ? 'selected' : ''}>LPR</option>
+              <option value="custom" ${p.rateType === 'custom' ? 'selected' : ''}>自定义</option>
+            </select>
+            ${p.rateType === 'custom' ? `
+              <input type="number" class="date-input" style="flex:1;" value="${p.rate}" placeholder="年利率%" step="0.01" onchange="updateInterestPrincipal(${p.id}, 'rate', this.value)" />
+            ` : ''}
+          </div>
+        </div>
+        <div class="field-row">
+          <span class="field-label">起算日</span>
+          <div class="field-input">
+            <input type="date" class="date-input" value="${p.startDate}" onchange="updateInterestPrincipal(${p.id}, 'startDate', this.value)" />
+          </div>
+        </div>
+        <div class="field-row">
+          <span class="field-label">截止日</span>
+          <div class="field-input">
+            <input type="date" class="date-input" value="${p.endDate}" onchange="updateInterestPrincipal(${p.id}, 'endDate', this.value)" />
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function updateInterestPrincipal(id, field, value) {
+    const p = interestPrincipals.find(x => x.id === id);
+    if (p) p[field] = value;
+    if (field === 'rateType') renderInterestPrincipals();
+  }
+
+  // 利息计算
+  function calculateInterest() {
+    // 验证输入
+    if (interestPrincipals.length === 0) {
+      document.getElementById('interest-placeholder').style.display = '';
+      document.getElementById('interest-result').classList.remove('visible');
+      return;
+    }
+
+    let totalInterest = 0;
+    const breakdownHtml = [];
+
+    interestPrincipals.forEach((p, idx) => {
+      const principal = parseFloat(p.principal);
+      if (!principal || principal <= 0) return;
+
+      // 如果用LPR，需要获取各时间段的LPR
+      const rate = p.rateType === 'lpr' ? getLPRForDate(p.startDate, p.lprTerm) : parseFloat(p.rate);
+      const rateDisplay = p.rateType === 'lpr' ? (rate ? rate + '%(LPR)' : '—') : p.rate + '%';
+
+      const interest = calculateInterestByPeriod(
+        principal,
+        p.startDate,
+        p.endDate,
+        p.rateType,
+        p.rate,
+        p.lprTerm
+      );
+
+      totalInterest += interest;
+      breakdownHtml.push(`
+        <div class="result-row">
+          <span class="label">本金 ${formatMoney(principal)} · ${p.startDate} 至 ${p.endDate}</span>
+          <span class="value">${formatMoney(interest)}</span>
+        </div>
+      `);
+    });
+
+    // 显示结果
+    document.getElementById('interest-placeholder').style.display = 'none';
+    document.getElementById('interest-result').classList.add('visible');
+    document.getElementById('interest-total').textContent = formatMoney(totalInterest);
+    document.getElementById('interest-breakdown').innerHTML = breakdownHtml.join('') || '<div class="result-row"><span class="label">无有效数据</span></div>';
+
+    // 生成计算过程详情
+    let detailHtml = '<div class="calc-detail-title">各本金利息计算过程</div>';
+    interestPrincipals.forEach((p, idx) => {
+      const principal = parseFloat(p.principal);
+      if (!principal || principal <= 0) return;
+
+      const days = daysBetween(p.startDate, p.endDate);
+      let formula = '';
+      let result = '';
+
+      if (p.rateType === 'custom') {
+        const rate = parseFloat(p.rate) || 0;
+        formula = `${principal}元 × ${rate}% ÷ 365天 × ${days}天`;
+        result = formatMoney(principal * rate / 100 / 365 * days);
+        detailHtml += `<div class="calc-step"><strong>本金 ${idx + 1}: ${formatMoney(principal)}</strong><br>起算日: ${p.startDate}，截止日: ${p.endDate}，共 ${days} 天<br><span class="formula">公式: ${formula}</span><br>利息: ${result}</div>`;
+      } else {
+        // LPR利率 - 需要展示分段计算
+        let lprDetails = '';
+        let totalInterestCalc = 0;
+        let currentDate = new Date(p.startDate);
+        let currentRate = getLPRForDate(p.startDate, p.lprTerm) || 3.65;
+
+        for (let i = 0; i < LPR_DATA.length; i++) {
+          const lprDate = new Date(LPR_DATA[i].date);
+          if (lprDate <= new Date(p.startDate)) continue;
+          if (lprDate > new Date(p.endDate)) break;
+
+          const segDays = daysBetween(currentDate.toISOString().split('T')[0], lprDate.toISOString().split('T')[0]);
+          if (segDays > 0) {
+            const segInterest = principal * currentRate / 100 / 365 * segDays;
+            totalInterestCalc += segInterest;
+            lprDetails += `<div style="font-size:11px;padding-left:8px;opacity:0.8;">${currentDate.toISOString().split('T')[0]} ~ ${lprDate.toISOString().split('T')[0]}: LPR ${currentRate}% × ${segDays}天 = ${formatMoney(segInterest)}</div>`;
+          }
+          currentDate = lprDate;
+          currentRate = p.lprTerm === '5y+' ? LPR_DATA[i].lpr5y : LPR_DATA[i].lpr1y;
+        }
+
+        const lastDays = daysBetween(currentDate.toISOString().split('T')[0], p.endDate);
+        if (lastDays > 0) {
+          const lastInterest = principal * currentRate / 100 / 365 * lastDays;
+          totalInterestCalc += lastInterest;
+          lprDetails += `<div style="font-size:11px;padding-left:8px;opacity:0.8;">${currentDate.toISOString().split('T')[0]} ~ ${p.endDate}: LPR ${currentRate}% × ${lastDays}天 = ${formatMoney(lastInterest)}</div>`;
+        }
+
+        formula = `本金 ${principal}元，LPR利率，期间共 ${days} 天，按LPR分段计算`;
+        result = formatMoney(totalInterestCalc);
+        detailHtml += `<div class="calc-step"><strong>本金 ${idx + 1}: ${formatMoney(principal)}</strong><br>${formula}<br><span class="formula">${lprDetails}</span><br>小计: ${result}</div>`;
+      }
+    });
+    document.getElementById('interest-calc-detail').innerHTML = detailHtml;
+  }
+
+  // 执行款计算 - 案件
+  function addCase() {
+    const id = Date.now();
+    const today = new Date().toISOString().split('T')[0];
+    cases.push({
+      id,
+      name: '',
+      principal: '',
+      rate: '',
+      rateType: 'custom',
+      lprTerm: '1y',
+      dueDate: '',
+      endDate: today,
+      lawyerFee: '',
+      litigationFee: '',
+      otherFee: ''
+    });
+    renderCases();
+  }
+
+  function removeCase(id) {
+    cases = cases.filter(c => c.id !== id);
+    renderCases();
+  }
+
+  function renderCases() {
+    const container = document.getElementById('case-list');
+    container.innerHTML = cases.map((c, idx) => `
+      <div class="item-card">
+        <div class="item-header">
+          <input type="text" class="date-input" value="${c.name}" placeholder="案件名称，如（2026）xxxx民初xxxx号" style="flex:1;font-size:14px;font-weight:600;" onchange="updateCase(${c.id}, 'name', this.value)" />
+          ${cases.length > 1 ? `<button class="item-delete" onclick="removeCase(${c.id})">✕</button>` : ''}
+        </div>
+        <div class="field-row">
+          <span class="field-label">本金</span>
+          <div class="field-input"><input type="number" class="date-input" value="${c.principal}" placeholder="判决确定本金" onchange="updateCase(${c.id}, 'principal', this.value)" /></div>
+        </div>
+        <div class="field-row">
+          <span class="field-label">利率</span>
+          <div class="field-input" style="display:flex;gap:6px;">
+            <select style="flex:1;height:44px;border:1px solid var(--border-cream);border-radius:12px;padding:0 8px;font-size:14px;background:var(--bg-white);color:var(--text-near-black);" onchange="updateCase(${c.id}, 'rateType', this.value)">
+              <option value="custom" ${c.rateType === 'custom' ? 'selected' : ''}>约定利率</option>
+              <option value="lpr" ${c.rateType === 'lpr' ? 'selected' : ''}>LPR</option>
+            </select>
+            ${c.rateType === 'custom' ? `
+              <input type="number" class="date-input" style="flex:1;" value="${c.rate}" placeholder="年利率%" step="0.01" onchange="updateCase(${c.id}, 'rate', this.value)" />
+            ` : ''}
+          </div>
+        </div>
+        <div class="field-row">
+          <span class="field-label">计算起始日</span>
+          <div class="field-input"><input type="date" class="date-input" value="${c.dueDate}" onchange="updateCase(${c.id}, 'dueDate', this.value)" /></div>
+        </div>
+        <div class="field-row">
+          <span class="field-label">计算截止日</span>
+          <div class="field-input"><input type="date" class="date-input" value="${c.endDate}" onchange="updateCase(${c.id}, 'endDate', this.value)" /></div>
+        </div>
+        <div class="divider" style="margin:10px 0;"></div>
+        <div class="field-row">
+          <span class="field-label">诉讼费</span>
+          <div class="field-input"><input type="number" class="date-input" value="${c.litigationFee}" placeholder="0" onchange="updateCase(${c.id}, 'litigationFee', this.value)" /></div>
+        </div>
+        <div class="field-row">
+          <span class="field-label">律师费</span>
+          <div class="field-input"><input type="number" class="date-input" value="${c.lawyerFee}" placeholder="0" onchange="updateCase(${c.id}, 'lawyerFee', this.value)" /></div>
+        </div>
+        <div class="field-row">
+          <span class="field-label">其他</span>
+          <div class="field-input"><input type="number" class="date-input" value="${c.otherFee}" placeholder="0" onchange="updateCase(${c.id}, 'otherFee', this.value)" /></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function updateCase(id, field, value) {
+    const c = cases.find(x => x.id === id);
+    if (c) c[field] = value;
+    if (field === 'rateType') renderCases();
+  }
+
+  // 还款
+  function addRepayment() {
+    const id = Date.now();
+    repayments.push({ id, date: '', amount: '' });
+    renderRepayments();
+  }
+
+  function removeRepayment(id) {
+    repayments = repayments.filter(r => r.id !== id);
+    renderRepayments();
+  }
+
+  function renderRepayments() {
+    const container = document.getElementById('repayment-list');
+    container.innerHTML = repayments.map((r, idx) => `
+      <div class="item-card">
+        <div class="item-header">
+          <span class="item-title">还款 ${idx + 1}</span>
+          <button class="item-delete" onclick="removeRepayment(${r.id})">✕</button>
+        </div>
+        <div class="field-row">
+          <span class="field-label">还款日</span>
+          <div class="field-input"><input type="date" class="date-input" value="${r.date}" onchange="updateRepayment(${r.id}, 'date', this.value)" /></div>
+        </div>
+        <div class="field-row">
+          <span class="field-label">还款额</span>
+          <div class="field-input"><input type="number" class="date-input" value="${r.amount}" placeholder="还款金额" onchange="updateRepayment(${r.id}, 'amount', this.value)" /></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function updateRepayment(id, field, value) {
+    const r = repayments.find(x => x.id === id);
+    if (r) r[field] = value;
+  }
+
+  function toggleMultiCase() {
+    isMultiCase = document.getElementById('multi-case').checked;
+  }
+
+  // 执行款计算
+  function calculateExecution() {
+    if (cases.length === 0) {
+      document.getElementById('execution-placeholder').style.display = '';
+      document.getElementById('execution-result').classList.remove('visible');
+      return;
+    }
+
+    const includeDelayedInterest = document.getElementById('delayed-interest').checked;
+
+    // 整理案件数据
+    const caseData = [];
+    for (const c of cases) {
+      const principal = parseFloat(c.principal) || 0;
+      if (principal <= 0) continue;
+
+      // 计算一般债务利息（从起算日到截止日）
+      const startDate = c.dueDate;
+      const endDate = c.endDate || new Date().toISOString().split('T')[0];
+      const rate = c.rateType === 'lpr' ? getLPRForDate(startDate, c.lprTerm) : parseFloat(c.rate) || 0;
+      const normalInterest = calculateInterestByPeriod(principal, startDate, endDate, c.rateType, c.rate, c.lprTerm);
+
+      // 迟延履行利息
+      let delayedInterest = 0;
+      let doubleInterest = 0;
+      if (includeDelayedInterest && c.dueDate) {
+        const dueDate = c.dueDate;
+        const delayedEndDate = c.endDate || new Date().toISOString().split('T')[0];
+        const delayedDays = daysBetween(dueDate, delayedEndDate);
+        if (delayedDays > 0) {
+          // 一般债务利息（迟延期间）
+          delayedInterest = principal * (rate || getLPRForDate(dueDate, c.lprTerm) || 3.65) / 100 / 365 * delayedDays;
+          // 加倍部分债务利息（日万分之1.75 = 0.0175% = 0.000175）
+          doubleInterest = principal * 0.000175 * delayedDays;
+        }
+      }
+
+      const lawyerFee = parseFloat(c.lawyerFee) || 0;
+      const litigationFee = parseFloat(c.litigationFee) || 0;
+      const otherFee = parseFloat(c.otherFee) || 0;
+      const totalFee = lawyerFee + litigationFee + otherFee;
+
+      caseData.push({
+        id: c.id,
+        name: c.name || '案件' + (caseData.length + 1),
+        principal,
+        normalInterest,
+        delayedInterest,
+        doubleInterest,
+        fees: totalFee,
+        dueDate: c.dueDate,
+        endDate: c.endDate,
+        rateType: c.rateType,
+        rate: c.rate,
+        lprTerm: c.lprTerm
+      });
+    }
+
+    // 处理还款（按法定顺序抵扣）
+    const sortedRepayments = [...repayments]
+      .filter(r => r.date && r.amount)
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    let remainingRepayments = sortedRepayments.map(r => ({
+      date: r.date,
+      amount: parseFloat(r.amount) || 0,
+      remaining: parseFloat(r.amount) || 0
+    }));
+
+    // 按顺序抵扣每个案件
+    for (let caseIdx = 0; caseIdx < caseData.length && remainingRepayments.length > 0; caseIdx++) {
+      const cs = caseData[caseIdx];
+
+      for (let repIdx = 0; repIdx < remainingRepayments.length && remainingRepayments[repIdx].remaining > 0; repIdx++) {
+        const rep = remainingRepayments[repIdx];
+
+        // 1. 先扣费用
+        if (cs.fees > 0 && rep.remaining > 0) {
+          const used = Math.min(cs.fees, rep.remaining);
+          cs.fees -= used;
+          rep.remaining -= used;
+        }
+
+        // 2. 再扣利息（一般债务利息）
+        if (cs.normalInterest > 0 && rep.remaining > 0) {
+          const used = Math.min(cs.normalInterest, rep.remaining);
+          cs.normalInterest -= used;
+          rep.remaining -= used;
+        }
+
+        // 3. 再扣迟延履行利息（如果有）
+        if (includeDelayedInterest) {
+          if (cs.delayedInterest > 0 && rep.remaining > 0) {
+            const used = Math.min(cs.delayedInterest, rep.remaining);
+            cs.delayedInterest -= used;
+            rep.remaining -= used;
+          }
+          if (cs.doubleInterest > 0 && rep.remaining > 0) {
+            const used = Math.min(cs.doubleInterest, rep.remaining);
+            cs.doubleInterest -= used;
+            rep.remaining -= used;
+          }
+        }
+
+        // 4. 最后扣本金
+        if (cs.principal > 0 && rep.remaining > 0) {
+          const used = Math.min(cs.principal, rep.remaining);
+          cs.principal -= used;
+          rep.remaining -= used;
+        }
+      }
+    }
+
+    // 汇总结果
+    let totalPrincipal = 0;
+    let totalNormalInterest = 0;
+    let totalDelayedInterest = 0;
+    let totalDoubleInterest = 0;
+    let totalFees = 0;
+
+    const breakdownHtml = caseData.map(cs => {
+      totalPrincipal += cs.principal;
+      totalNormalInterest += cs.normalInterest;
+      totalDelayedInterest += cs.delayedInterest;
+      totalDoubleInterest += cs.doubleInterest;
+      totalFees += cs.fees;
+
+      let html = `<div class="result-row"><span class="label">${cs.name}</span></div>`;
+      if (cs.principal > 0) {
+        html += `<div class="result-row" style="padding-left:10px;"><span class="label">本金</span><span class="value">${formatMoney(cs.principal)}</span></div>`;
+      }
+      if (cs.normalInterest > 0) {
+        html += `<div class="result-row" style="padding-left:10px;"><span class="label">一般利息</span><span class="value">${formatMoney(cs.normalInterest)}</span></div>`;
+      }
+      if (includeDelayedInterest) {
+        if (cs.delayedInterest > 0) {
+          html += `<div class="result-row" style="padding-left:10px;"><span class="label">迟延一般利息</span><span class="value">${formatMoney(cs.delayedInterest)}</span></div>`;
+        }
+        if (cs.doubleInterest > 0) {
+          html += `<div class="result-row" style="padding-left:10px;"><span class="label">加倍利息</span><span class="value">${formatMoney(cs.doubleInterest)}</span></div>`;
+        }
+      }
+      if (cs.fees > 0) {
+        html += `<div class="result-row" style="padding-left:10px;"><span class="label">费用</span><span class="value">${formatMoney(cs.fees)}</span></div>`;
+      }
+      return html;
+    }).join('');
+
+    const total = totalPrincipal + totalNormalInterest + totalDelayedInterest + totalDoubleInterest + totalFees;
+
+    // 显示结果
+    document.getElementById('execution-placeholder').style.display = 'none';
+    document.getElementById('execution-result').classList.add('visible');
+    document.getElementById('execution-total').textContent = formatMoney(total);
+
+    const detailRows = `
+      ${totalPrincipal > 0 ? `<div class="result-row"><span class="label">本金</span><span class="value">${formatMoney(totalPrincipal)}</span></div>` : ''}
+      ${totalNormalInterest > 0 ? `<div class="result-row"><span class="label">一般利息</span><span class="value">${formatMoney(totalNormalInterest)}</span></div>` : ''}
+      ${includeDelayedInterest && totalDelayedInterest > 0 ? `<div class="result-row"><span class="label">迟延利息</span><span class="value">${formatMoney(totalDelayedInterest)}</span></div>` : ''}
+      ${includeDelayedInterest && totalDoubleInterest > 0 ? `<div class="result-row"><span class="label">加倍利息</span><span class="value">${formatMoney(totalDoubleInterest)}</span></div>` : ''}
+      ${totalFees > 0 ? `<div class="result-row"><span class="label">费用</span><span class="value">${formatMoney(totalFees)}</span></div>` : ''}
+    `;
+    document.getElementById('execution-breakdown').innerHTML = detailRows + breakdownHtml;
+
+    // 生成计算过程详情
+    let execDetailHtml = '<div class="calc-detail-title">各案件计算过程</div>';
+    for (const cs of caseData) {
+      const startDate = cs.normalInterest > 0 ? (cs.dueDate || '—') : '—';
+      const endDate = cs.endDate || '—';
+      const days = daysBetween(startDate, endDate);
+      let caseDetails = `<div class="calc-step"><strong>案件: ${cs.name}</strong><br>`;
+
+      if (cs.principal > 0) {
+        caseDetails += `本金: ${formatMoney(cs.principal)}<br>`;
+      }
+      if (cs.normalInterest > 0) {
+        caseDetails += `一般利息: ${formatMoney(cs.normalInterest)} (${startDate} ~ ${endDate})<br>`;
+      }
+      if (includeDelayedInterest && (cs.delayedInterest > 0 || cs.doubleInterest > 0)) {
+        const delayedDays = daysBetween(cs.dueDate, cs.endDate || new Date().toISOString().split('T')[0]);
+        caseDetails += `迟延天数: ${delayedDays}天<br>`;
+        if (cs.delayedInterest > 0) {
+          caseDetails += `迟延一般利息: ${formatMoney(cs.delayedInterest)}<br>`;
+        }
+        if (cs.doubleInterest > 0) {
+          caseDetails += `加倍利息: ${formatMoney(cs.doubleInterest)} (本金 ${cs.principal} × 0.0175% × ${delayedDays}天)<br>`;
+        }
+      }
+      if (cs.fees > 0) {
+        caseDetails += `费用: ${formatMoney(cs.fees)}<br>`;
+      }
+      caseDetails += `小计: ${formatMoney(cs.principal + cs.normalInterest + cs.delayedInterest + cs.doubleInterest + cs.fees)}</div>`;
+      execDetailHtml += caseDetails;
+    }
+
+    // 处理还款抵扣的详情
+    if (sortedRepayments.length > 0) {
+      execDetailHtml += '<div class="calc-detail-title" style="margin-top:12px;">还款抵扣过程</div>';
+      for (const rep of sortedRepayments) {
+        execDetailHtml += `<div class="calc-step">${rep.date}: 还款 ${formatMoney(rep.amount)}</div>`;
+      }
+    }
+
+    document.getElementById('execution-calc-detail').innerHTML = execDetailHtml;
+  }
+
+  // 弹窗
+  function openModal(type) {
+    const title = document.getElementById('modal-title');
+    const content = document.getElementById('modal-content');
+
+    if (type === 'interest') {
+      title.textContent = '利息计算法律依据';
+      content.innerHTML = `
+        <h3>一、法定孳息</h3>
+        <p>借款合同约定支付利息的，借款人应按照约定支付利息。</p>
+
+        <h3>二、未约定利息</h3>
+        <p>既未约定借期内利率，也未约定逾期利率，出借人主张借款人自逾期还款之日起参照当时一年期LPR标准计算的利息承担逾期还款违约责任的，人民法院应予支持。</p>
+        <p style="font-size:12px;color:var(--text-stone-gray);">—— 《最高人民法院关于审理民间借贷案件适用法律若干问题的规定》(法释〔2020〕17号) 第28条</p>
+
+        <h3>三、利率上限</h3>
+        <p>出借人与借款人既约定了逾期利率，又约定了违约金或者其他费用，出借人可以选择主张逾期利息、违约金或者其他费用，也可以一并主张，但总计超过合同成立时一年期LPR四倍的部分，人民法院不予支持。</p>
+
+        <h3>四、LPR历史数据</h3>
+        <table class="law-table">
+          <thead>
+            <tr><th>公布日期</th><th>1年期LPR</th><th>5年期以上LPR</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>2019-08-20</td><td>4.25%</td><td>4.85%</td></tr>
+            <tr><td>2020-02-20</td><td>4.05%</td><td>4.75%</td></tr>
+            <tr><td>2020-04-20</td><td>3.85%</td><td>4.65%</td></tr>
+            <tr><td>2021-12-20</td><td>3.80%</td><td>4.65%</td></tr>
+            <tr><td>2022-01-20</td><td>3.70%</td><td>4.60%</td></tr>
+            <tr><td>2022-05-20</td><td>3.70%</td><td>4.45%</td></tr>
+            <tr><td>2022-08-22</td><td>3.65%</td><td>4.30%</td></tr>
+            <tr><td>2023-06-20</td><td>3.55%</td><td>4.20%</td></tr>
+            <tr><td>2024-02-20</td><td>3.45%</td><td>3.95%</td></tr>
+            <tr><td>2024-07-22</td><td>3.35%</td><td>3.85%</td></tr>
+            <tr><td>2025-06-20</td><td>3.00%</td><td>3.50%</td></tr>
+            <tr><td>2026-03-20</td><td>3.00%</td><td>3.50%</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:12px;color:var(--text-stone-gray);">注：LPR每月20日公布，利率适用于其后至下次公布前。</p>
+      `;
+    } else {
+      title.textContent = '执行款计算法律依据';
+      content.innerHTML = `
+        <h3>一、迟延履行期间债务利息</h3>
+        <p>被执行人未按判决、裁定和其他法律文书指定的期间履行给付金钱义务的，应当加倍支付迟延履行期间的债务利息。</p>
+        <p style="font-size:12px;color:var(--text-stone-gray);">——《民事诉讼法》（2024修正）第260条</p>
+
+        <h3>二、利息构成</h3>
+        <p>迟延履行期间的债务利息包括一般债务利息和加倍部分债务利息两部分。</p>
+        <p style="font-size:12px;color:var(--text-stone-gray);">—— 《最高人民法院关于执行程序中计算迟延履行期间的债务利息适用法律若干问题的解释》（法释〔2014〕8号）第1条</p>
+
+        <h3>三、加倍部分债务利息</h3>
+        <p>按照日万分之一点七五（0.0175%）计算。</p>
+        <p><strong>公式：</strong></p>
+        <p>加倍部分债务利息 = 本金 × 0.0175% × 迟延履行天数</p>
+        <p style="font-size:12px;color:var(--text-stone-gray);">基数不含已产生的一般债务利息</p>
+
+        <h3>四、起算时间</h3>
+        <p>自生效法律文书确定的履行期间届满之日起计算；</p>
+        <p>分期履行的，自每次履行期间届满之日起计算；</p>
+        <p>未确定履行期间的，自法律文书生效之日起计算。</p>
+
+        <h3>五、法定清偿顺序</h3>
+        <p>根据《民法典》第561条：债务人在履行主债务外还应当支付利息和实现债权的有关费用，其给付不足以清偿全部债务的，除当事人另有约定外，应当按照下列顺序履行：</p>
+        <p>（一）实现债权的有关费用</p>
+        <p>（二）利息</p>
+        <p>（三）主债务</p>
+
+        <h3>六、执行款计算公式</h3>
+        <p><strong>执行款总额 =</strong></p>
+        <p>生效法律文书确定的金钱债务</p>
+        <p>+ 迟延履行期间的一般债务利息</p>
+        <p>+ 加倍部分债务利息</p>
+        <p>- 已履行金额（按法定顺序抵扣）</p>
+      `;
+    }
+
+    document.getElementById('modal-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function onOverlayClick(e) {
+    if (e.target === document.getElementById('modal-overlay')) closeModal();
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  // 初始化
+  init();
+
+  // 切换计算过程显示
+  function toggleCalcDetail(type) {
+    const detailEl = document.getElementById(type + '-calc-detail');
+    const btn = detailEl.previousElementSibling;
+    if (detailEl.classList.contains('visible')) {
+      detailEl.classList.remove('visible');
+      btn.textContent = '查看计算过程';
+    } else {
+      detailEl.classList.add('visible');
+      btn.textContent = '收起计算过程';
+    }
+  }
+</script>
+</body>
+</html>
