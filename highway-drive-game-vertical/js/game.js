@@ -132,14 +132,14 @@ const Game = {
     bindEvents() {
         // 难度选择按钮 - 展开/收起难度菜单
         document.getElementById('difficulty-btn').addEventListener('click', () => {
-            const select = document.getElementById('difficulty-select');
-            select.style.display = select.style.display === 'none' ? 'block' : 'none';
+            document.getElementById('difficulty-select').classList.toggle('show');
         });
 
         // 难度选项选择
-        document.querySelectorAll('.difficulty-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('#difficulty-select .difficulty-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.querySelectorAll('#difficulty-select .difficulty-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
             });
         });

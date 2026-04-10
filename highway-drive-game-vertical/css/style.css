@@ -415,27 +415,32 @@ body {
     gap: 20px;
 }
 
-/* 难度选择 */
-#difficulty-select {
-    margin: 25px auto;
-    text-align: center;
-}
-
-#difficulty-label {
-    color: #4ecca3;
-    font-size: 18px;
-    font-weight: bold;
-    margin-bottom: 12px;
-}
-
-#difficulty-options {
+/* 难度选择 - 折叠菜单 */
+#difficulty-wrapper {
     display: flex;
-    justify-content: center;
-    gap: 12px;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 30px;
 }
 
-.difficulty-btn {
-    padding: 10px 20px;
+#difficulty-btn {
+    width: 200px;
+}
+
+/* 难度选项（默认隐藏） */
+#difficulty-select {
+    display: none;
+    gap: 12px;
+    justify-content: center;
+}
+
+#difficulty-select.show {
+    display: flex;
+}
+
+#difficulty-select .difficulty-btn {
+    padding: 12px 20px;
     font-size: 16px;
     border: 3px solid #4ecca3;
     background: rgba(0,0,0,0.5);
@@ -443,13 +448,14 @@ body {
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
+    min-width: 65px;
 }
 
-.difficulty-btn:hover {
+#difficulty-select .difficulty-btn:hover {
     background: rgba(78, 204, 163, 0.2);
 }
 
-.difficulty-btn.active {
+#difficulty-select .difficulty-btn.active {
     background: #4ecca3;
     color: #1a1a2e;
     font-weight: bold;

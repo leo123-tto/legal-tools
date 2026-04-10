@@ -22,18 +22,17 @@
                     <div id="high-score">最高积分: <span id="high-score-value">0</span></div>
                 </div>
 
-                <!-- 难度选择按钮 -->
-                <button id="difficulty-btn" class="pixel-btn btn-blue" style="margin-top: 15px;">🚗 难度选择</button>
-
-                <div id="difficulty-select" style="display: none;">
-                    <div id="difficulty-label">选择难度</div>
-                    <div id="difficulty-options">
+                <!-- 难度选择（折叠菜单） -->
+                <div id="difficulty-wrapper">
+                    <button id="difficulty-btn" class="pixel-btn btn-blue" type="button">🚗 难度选择</button>
+                    <div id="difficulty-select">
                         <button class="difficulty-btn active" data-speed="2">简单</button>
                         <button class="difficulty-btn" data-speed="3">普通</button>
                         <button class="difficulty-btn" data-speed="5">困难</button>
                     </div>
                 </div>
 
+                <!-- 开始按钮区 -->
                 <div id="start-buttons">
                     <button id="start-btn" class="pixel-btn">开始旅程</button>
                     <button id="garage-btn" class="pixel-btn btn-orange">选择车辆</button>
