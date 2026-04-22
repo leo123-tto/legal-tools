@@ -13,24 +13,27 @@
 - **高速自驾游**：竖屏驾驶小游戏，滑动控制，学习高速路网知识、车牌知识和口算练习
 - **五子棋**：经典棋类小游戏，支持单人/双人模式，三种AI难度
 - **HTML 可视化编辑器**：快速修改 HTML 汇报材料，支持文字直编、图片替换、进度条联动、样式编辑和一键导出
-- **执行背景调查**：本地前端 + FastAPI 后端 + 模块化调查流水线，支持任务进度、模块结果和 Markdown 报告导出
+- **执行背景调查**：企业背调工具，通过企查查（主）和元典（备）查询数据，LLM 生成 Markdown 报告，支持 API Key 认证保护
 - **利息/执行款计算器**：计算借款利息（支持多本金、LPR历史数据），计算执行款（支持多案、还款抵扣、迟延履行利息）
 
 ## 使用方式
 
 直接在浏览器中打开 `index.html` 即可使用。
 
-若要使用“执行背景调查”工具，需要先启动本地后端：
+若要使用”执行背景调查”工具，需要先启动本地后端：
 
 ```bash
 cd investigation-tool/backend
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env
+# 编辑 .env 填入 YUANDIAN_API_KEY 和 ALLOWED_API_KEYS
+set -a && source .env && set +a
 uvicorn main:app --reload --port 8000
 ```
 
-然后单独打开 `investigation-tool/frontend/index.html`，或从主页入口进入。
+然后从主页入口进入即可。
 
 ## 在线访问
 
@@ -46,7 +49,7 @@ legal-tools/
 ├── daycal.html          # 天数计算器
 ├── number.html          # 数字大写转换器
 ├── interest.html        # 利息/执行款计算器
-├── highway-drive-game-vertical/  # 高速自驾游（竖屏版）
+├── highway-drive-game/      # 高速自驾游
 │   ├── index.html
 │   ├── css/style.css
 │   ├── js/              # 游戏核心逻辑
@@ -147,6 +150,15 @@ npx getdesign@latest add claude
 - 事件监听用 `addEventListener`，不用内联 `onclick`
 
 ## 更新日志
+
+### 2026-04-22
+
+- **新增执行背景调查工具**
+  - 企业背调流水线：基础信息 → 风险查询 → 案例深挖 → 报告生成
+  - 企查查（主）+ 元典（备）双数据源，支持统一社会信用代码和案号查询
+  - LM Studio 本地 LLM 生成 Markdown 调查报告
+  - API Key 认证保护，前端实时显示后端连接状态
+  - 调查报告本地保存，支持 Markdown 导出
 
 ### 2026-04-10
 

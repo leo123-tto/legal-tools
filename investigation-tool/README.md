@@ -6,7 +6,7 @@
 
 - 🔍 **多数据源**：企查查（主）、元典（备）企业信息查询
 - 📄 **案例深挖**：通过案号查询裁判文书详情
-- 🤖 **灵活报告**：支持 LM Studio、Hermes、Cloud 等多种 LLM 生成报告
+- 🤖 **灵活报告**：支持 LM Studio 本地模型生成报告（其余 Provider 预留）
 - 🔐 **访问控制**：API Key 认证保护
 - 💾 **本地存储**：调查报告本地保存
 
@@ -44,23 +44,16 @@ ALLOWED_API_KEYS=your-secret-key
 
 ```bash
 # 后端（从 .env 加载环境变量）
-cd backend
 source .venv/bin/activate
 set -a && source .env && set +a
 uvicorn main:app --reload --port 8000
-
-# 前端（另一个终端）
-cd legal-tools
-python3 -m http.server 8080
 ```
 
 ### 4. 访问
 
-打开 http://127.0.0.1:8080/investigation-tool/frontend/index.html
-
-点击右上角 ⚙️ 设置，输入：
+从主页入口进入"执行背景调查"页面，点击右上角 ⚙️ 设置，输入：
 - 后端地址：`http://127.0.0.1:8000`
-- API Key：你在 `ALLOWED_API_KEYS` 设置的密钥
+- API Key：你在 `.env` 中 `ALLOWED_API_KEYS` 设置的密钥
 
 ## 数据源
 
@@ -81,17 +74,16 @@ python3 -m http.server 8080
 
 ## LLM Provider
 
-| Provider | 说明 |
-|----------|------|
-| `lm_studio` | 本地 LM Studio（默认） |
-| `hermes` | Hermes Agent API Server |
-| `cloud` | 云端中转站 API |
-| `claude_code` | Claude Code（预留） |
+> 注意：目前只有 LM Studio 经过实际测试可用，其余为预留接口。
 
-切换方式：
-```bash
-export REPORT_PROVIDER=lm_studio  # 或 hermes / cloud
-```
+| Provider | 说明 | 状态 |
+|----------|------|------|
+| `lm_studio` | 本地 LM Studio | ✅ 已测试 |
+| `hermes` | Hermes Agent API Server | 🔜 待接入 |
+| `cloud` | 云端中转站 API | 🔜 待接入 |
+| `claude_code` | Claude Code | 🔜 预留 |
+
+切换方式：设置环境变量 `REPORT_PROVIDER`，并确保对应 provider 的配置项已填写。
 
 ## API 接口
 
@@ -155,7 +147,7 @@ investigation-tool/
 
 ## 待接入
 
-- [ ] 企查查完整功能测试（积分恢复后）
 - [ ] Hermes Provider 测试
 - [ ] Cloud Provider 测试
 - [ ] PDF 报告导出
+- [ ] 后端云端部署（移动端访问）
