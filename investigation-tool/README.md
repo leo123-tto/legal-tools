@@ -4,7 +4,7 @@
 
 ## 功能特性
 
-- 🔍 **多数据源**：企查查（主）、元典（备）企业信息查询
+- 🔍 **多数据源 + Key 池**：企查查（主）、元典（备），均支持多 Key 轮换，积分不足自动切换
 - 📄 **案例深挖**：通过案号查询裁判文书详情
 - 🤖 **灵活报告**：支持 LM Studio 本地模型生成报告（其余 Provider 预留）
 - 🔐 **访问控制**：API Key 认证保护
@@ -30,11 +30,11 @@ nano .env
 
 必需配置：
 ```bash
-# 元典 API Key（必填）
-YUANDIAN_API_KEY=your_yuandian_api_key
+# 元典 API Key（多个用逗号分隔，可选）
+YUANDIAN_API_KEYS=your_yuandian_api_key
 
-# 企查查 CLI（运行一次配置）
-qcc init --authorization "Bearer your_qcc_api_key"
+# 企查查 Bearer Token（多个用逗号分隔，可选）
+QCC_AUTHORIZATIONS=Bearer your_qcc_token
 
 # 访问控制（必填，设置访问密钥）
 ALLOWED_API_KEYS=your-secret-key
@@ -62,14 +62,25 @@ uvicorn main:app --reload --port 8000
 
 ### 企查查 CLI（主数据源）
 - 安装：`npm install -g qcc-agent-cli`
-- 配置：`qcc init --authorization "Bearer YOUR_API_KEY"`
+- 配置：多个 Bearer token 用逗号分隔写在 `QCC_AUTHORIZATIONS`，积分不足时自动切换
 - 积分：每天 500 免费积分
 - 文档：https://agent.qcc.com/
 
 ### 元典 API（备用数据源）
 - 企业详情：`rh_company_detail`
 - 案例详情：`rh_case_details`
+- 配置：多个 API Key 用逗号分隔写在 `YUANDIAN_API_KEYS`，积分不足时自动切换
+- 积分：按套餐
 - 文档：https://open.chineselaw.com/
+
+### 查询逻辑
+
+| 输入 | 默认流程 | 可选 |
+|------|---------|------|
+| 有信用代码 | 元典直接查 → 企查查补充（如勾选） | 企查查补充 |
+| 只有公司名称 | 企查查按名称查 → 元典备选（仅当名称是信用代码） | 企查查补充 |
+
+前端"查询选项"可勾选"元典查到公司名称后，用企查查补充查询"获取更丰富数据。
 
 ### 查询方式
 - **统一社会信用代码**（18位）：如 `91320213768290914X`
@@ -127,6 +138,7 @@ investigation-tool/
 │   │   ├── services/
 │   │   │   ├── qichacha_service.py       # 企查查 CLI
 │   │   │   ├── yuandian_service.py       # 元典 API
+│   │   │   ├── key_pool.py               # Key 池轮换
 │   │   │   └── report_provider*.py       # LLM Provider
 │   │   ├── middleware/
 │   │   │   └── auth.py                  # API Key 认证
@@ -146,10 +158,12 @@ investigation-tool/
 - API Key 存储在本地 localStorage
 - 后端环境变量不在代码中硬编码
 - `.env` 文件已加入 `.gitignore`
-- 企查查 Key 配置在 `~/.qcc/config.json`
+- 企查查 Key 写入 `~/.qcc/config.json`（程序自动管理）
+- 多 Key 配置在 `.env` 中，敏感内容不会同步到 GitHub
 
 ## 待接入
 
+- [x] Key 池轮换（已接入）
 - [ ] Hermes Provider 测试
 - [ ] Cloud Provider 测试
 - [ ] PDF 报告导出
