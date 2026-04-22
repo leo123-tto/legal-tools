@@ -40,10 +40,13 @@ qcc init --authorization "Bearer your_qcc_api_key"
 ALLOWED_API_KEYS=your-secret-key
 ```
 
-### 3. 启动
+### 3. 启动后端
 
+**方式一（推荐）：双击 `start-backend.command`**，会自动打开终端并启动后端。
+
+**方式二：手动启动**
 ```bash
-# 后端（从 .env 加载环境变量）
+cd investigation-tool/backend
 source .venv/bin/activate
 set -a && source .env && set +a
 uvicorn main:app --reload --port 8000

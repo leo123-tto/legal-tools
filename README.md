@@ -20,20 +20,7 @@
 
 直接在浏览器中打开 `index.html` 即可使用。
 
-若要使用”执行背景调查”工具，需要先启动本地后端：
-
-```bash
-cd investigation-tool/backend
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-# 编辑 .env 填入 YUANDIAN_API_KEY 和 ALLOWED_API_KEYS
-set -a && source .env && set +a
-uvicorn main:app --reload --port 8000
-```
-
-然后从主页入口进入即可。
+若要使用”执行背景调查”工具，双击 `start-backend.command` 即可一键启动后端（Mac）。然后从主页入口进入即可。
 
 ## 在线访问
 
