@@ -38,6 +38,7 @@ class InvestigationRequest(BaseModel):
     subject_type: SubjectType
     time_range: TimeRange
     include_bidding: bool = False
+    supplement_qichacha: bool = Field(default=False, description="元典查到后是否用企查查补充查询")
 
 
 class InvestigationContext(BaseModel):
@@ -45,6 +46,9 @@ class InvestigationContext(BaseModel):
     subject_name: str
     credit_code: str | None = None
     subject_type: SubjectType
+    time_range: TimeRange
+    include_bidding: bool = False
+    supplement_qichacha: bool = False
     time_range: TimeRange
     include_bidding: bool = False
     status: TaskStatus = "pending"
@@ -70,6 +74,7 @@ class InvestigationContext(BaseModel):
             subject_type=request.subject_type,
             time_range=request.time_range,
             include_bidding=request.include_bidding,
+            supplement_qichacha=request.supplement_qichacha,
         )
 
     def add_log(self, module_id: str, message: str, level: Literal["info", "warning", "error"] = "info") -> None:

@@ -349,6 +349,13 @@
                         <input id="creditCode" type="text" placeholder="有则填写，元典查询必需">
                     </div>
                     <div class="field">
+                        <label>查询选项</label>
+                        <div class="checkbox-row">
+                            <input id="supplementQichacha" type="checkbox">
+                            <label for="supplementQichacha">元典查到公司名称后，用企查查补充查询（更丰富）</label>
+                        </div>
+                    </div>
+                    <div class="field">
                         <label for="subjectType">类型</label>
                         <select id="subjectType">
                             <option value="person">自然人</option>
@@ -543,6 +550,7 @@
                 subject_type: document.getElementById("subjectType").value,
                 time_range: document.getElementById("timeRange").value,
                 include_bidding: document.getElementById("includeBidding").checked,
+                supplement_qichacha: document.getElementById("supplementQichacha").checked,
             };
             if (creditCodeInput) {
                 payload.credit_code = creditCodeInput;
