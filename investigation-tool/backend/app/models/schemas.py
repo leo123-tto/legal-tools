@@ -34,6 +34,7 @@ class ModuleProgress(BaseModel):
 
 class InvestigationRequest(BaseModel):
     subject_name: str = Field(min_length=1, max_length=200)
+    credit_code: str | None = Field(default=None, max_length=18)
     subject_type: SubjectType
     time_range: TimeRange
     include_bidding: bool = False
@@ -42,6 +43,7 @@ class InvestigationRequest(BaseModel):
 class InvestigationContext(BaseModel):
     task_id: str = Field(default_factory=lambda: str(uuid4()))
     subject_name: str
+    credit_code: str | None = None
     subject_type: SubjectType
     time_range: TimeRange
     include_bidding: bool = False
@@ -64,6 +66,7 @@ class InvestigationContext(BaseModel):
     def from_request(cls, request: InvestigationRequest) -> "InvestigationContext":
         return cls(
             subject_name=request.subject_name.strip(),
+            credit_code=request.credit_code,
             subject_type=request.subject_type,
             time_range=request.time_range,
             include_bidding=request.include_bidding,

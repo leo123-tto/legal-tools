@@ -345,6 +345,10 @@
                         <input id="subjectName" type="text" placeholder="请输入姓名或公司名称">
                     </div>
                     <div class="field">
+                        <label for="creditCode">统一社会信用代码（18位）</label>
+                        <input id="creditCode" type="text" placeholder="有则填写，元典查询必需">
+                    </div>
+                    <div class="field">
                         <label for="subjectType">类型</label>
                         <select id="subjectType">
                             <option value="person">自然人</option>
@@ -370,7 +374,7 @@
                         <button class="secondary-btn" id="refreshButton">刷新状态</button>
                         <button class="ghost-btn" id="downloadButton">导出 Markdown</button>
                     </div>
-                    <p class="hint">后端默认地址：<code>http://127.0.0.1:8000</code></p>
+                    <p class="hint">⚠️ 请先启动后端，再开始调查</p>
                 </section>
             </div>
 
@@ -533,28 +537,40 @@
                 return;
             }
 
+            const creditCodeInput = document.getElementById("creditCode").value.trim();
             const payload = {
                 subject_name: subjectName,
                 subject_type: document.getElementById("subjectType").value,
                 time_range: document.getElementById("timeRange").value,
-                include_bidding: document.getElementById("includeBidding").checked
+                include_bidding: document.getElementById("includeBidding").checked,
             };
-
-            const response = await fetch(`${apiBaseUrl}/api/investigation/start`, {
-                method: "POST",
-                headers: getHeaders(),
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) {
-                const message = await response.text();
-                throw new Error(message || "启动任务失败");
+            if (creditCodeInput) {
+                payload.credit_code = creditCodeInput;
             }
 
-            const data = await response.json();
-            currentTaskId = data.task_id;
-            setSummary(currentTaskId, data.status, "");
-            beginPolling();
+            try {
+                const response = await fetch(`${apiBaseUrl}/api/investigation/start`, {
+                    method: "POST",
+                    headers: getHeaders(),
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const message = await response.text();
+                    throw new Error(message || "启动任务失败");
+                }
+
+                const data = await response.json();
+                currentTaskId = data.task_id;
+                setSummary(currentTaskId, data.status, "");
+                beginPolling();
+            } catch (error) {
+                if (error.name === "TypeError" && error.message.includes("fetch")) {
+                    alert("无法连接后端服务，请确认后端已启动（uvicorn main:app --reload --port 8000）且地址配置正确。");
+                } else {
+                    alert(error.message);
+                }
+            }
         }
 
         async function refreshTask() {
@@ -563,30 +579,39 @@
                 return;
             }
 
-            const statusResponse = await fetch(`${apiBaseUrl}/api/investigation/${currentTaskId}/status`, {
-                headers: getHeaders()
-            });
-            if (!statusResponse.ok) {
-                const msg = await statusResponse.text();
-                throw new Error(msg || "读取任务状态失败");
-            }
-            const statusData = await statusResponse.json();
-            setSummary(statusData.task_id, statusData.status, statusData.current_module);
-            renderProgress(statusData.module_progress || []);
+            try {
+                const statusResponse = await fetch(`${apiBaseUrl}/api/investigation/${currentTaskId}/status`, {
+                    headers: getHeaders()
+                });
+                if (!statusResponse.ok) {
+                    const msg = await statusResponse.text();
+                    throw new Error(msg || "读取任务状态失败");
+                }
+                const statusData = await statusResponse.json();
+                setSummary(statusData.task_id, statusData.status, statusData.current_module);
+                renderProgress(statusData.module_progress || []);
 
-            const resultResponse = await fetch(`${apiBaseUrl}/api/investigation/${currentTaskId}/result`, {
-                headers: getHeaders()
-            });
-            if (!resultResponse.ok) {
-                const msg = await resultResponse.text();
-                throw new Error(msg || "读取任务结果失败");
-            }
-            const resultData = await resultResponse.json();
-            renderResults(resultData);
-            reportBox.textContent = resultData.final_report || "尚未生成报告";
+                const resultResponse = await fetch(`${apiBaseUrl}/api/investigation/${currentTaskId}/result`, {
+                    headers: getHeaders()
+                });
+                if (!resultResponse.ok) {
+                    const msg = await resultResponse.text();
+                    throw new Error(msg || "读取任务结果失败");
+                }
+                const resultData = await resultResponse.json();
+                renderResults(resultData);
+                reportBox.textContent = resultData.final_report || "尚未生成报告";
 
-            if (statusData.status === "completed" || statusData.status === "failed") {
-                stopPolling();
+                if (statusData.status === "completed" || statusData.status === "failed") {
+                    stopPolling();
+                }
+            } catch (error) {
+                if (error.name === "TypeError" && error.message.includes("fetch")) {
+                    alert("无法连接后端服务，请确认后端已启动且地址配置正确。");
+                    stopPolling();
+                } else {
+                    alert(error.message);
+                }
             }
         }
 

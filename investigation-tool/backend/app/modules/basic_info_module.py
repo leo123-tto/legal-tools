@@ -29,14 +29,37 @@ class BasicInfoModule(BaseInvestigationModule):
             context.add_log(self.module_id, "基础信息查询跳过：仅支持企业")
             return context
 
-        # 先尝试企查查
+        # 优先使用传入的信用代码调用元典
+        if context.credit_code and self._is_credit_code(context.credit_code):
+            yd_result = await self.yuandian.query_company_detail(credit_code=context.credit_code)
+            if yd_result.get("found"):
+                data = yd_result["parsed_data"]
+                summary_parts = [
+                    f"公司名称：{data.get('企业名称', '')}",
+                    f"法定代表人：{data.get('法定代表人', '')}",
+                    f"注册资本：{data.get('注册资本', '')}",
+                    f"成立日期：{data.get('成立日期', '')}",
+                    f"经营状态：{data.get('经营状态', '')}",
+                ]
+                context.basic_info = {
+                    "summary": "；".join(filter(None, summary_parts)),
+                    "registration": data,
+                    "shareholders": data.get("股东详情", []),
+                    "change_records": data.get("变更", []),
+                }
+                context.add_log(self.module_id, f"已通过信用代码查询元典: {data.get('企业名称', '')}")
+                return context
+            else:
+                context.add_log(self.module_id, f"元典信用代码查询失败，尝试企查查: {yd_result.get('error', '')}")
+
+        # 企查查按名称查询
         qcc_result = await self.qichacha.query_basic_info(context.subject_name, context.subject_type)
         if qcc_result.get("success"):
             context.basic_info = qcc_result["parsed_data"]
             context.add_log(self.module_id, f"已查询企查查基础信息: {context.basic_info.get('summary', '')[:50]}")
             return context
 
-        # 企查查失败时，用元典（仅支持统一社会信用代码查询）
+        # 企查查失败时，用元典（仅当输入本身是信用代码时）
         if self._is_credit_code(context.subject_name):
             yd_result = await self.yuandian.query_company_detail(credit_code=context.subject_name)
             if yd_result.get("found"):
