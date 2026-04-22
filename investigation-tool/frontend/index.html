@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>执行背景调查 - 法律工具集</title>
+    <style>
+        :root {
+            --bg-parchment: #f5f4ed;
+            --bg-ivory: #faf9f5;
+            --bg-white: #ffffff;
+            --brand-terracotta: #c96442;
+            --brand-coral: #d97757;
+            --text-near-black: #141413;
+            --text-olive-gray: #5e5d59;
+            --text-stone-gray: #87867f;
+            --border-cream: #f0eee6;
+            --border-warm: #e8e6dc;
+            --focus-blue: #3898ec;
+            --error-crimson: #b53333;
+            --success-green: #4f7a5a;
+            --shadow-whisper: rgba(0, 0, 0, 0.05) 0px 4px 24px;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--bg-parchment);
+            color: var(--text-near-black);
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+            line-height: 1.6;
+            padding: 18px 16px 40px;
+        }
+
+        .container {
+            max-width: 1080px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .back-link {
+            color: var(--brand-terracotta);
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        h1 {
+            font-family: -apple-system, "Songti SC", "SimSun", Georgia, serif;
+            font-size: 32px;
+            font-weight: 500;
+        }
+
+        .subtitle {
+            color: var(--text-olive-gray);
+            font-size: 15px;
+            margin-top: 6px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 18px;
+        }
+
+        .card {
+            background: var(--bg-ivory);
+            border: 1px solid var(--border-cream);
+            border-radius: 12px;
+            box-shadow: var(--shadow-whisper);
+            padding: 20px;
+        }
+
+        .card + .card {
+            margin-top: 18px;
+        }
+
+        .card-title {
+            font-family: -apple-system, "Songti SC", "SimSun", Georgia, serif;
+            font-size: 20px;
+            font-weight: 500;
+            margin-bottom: 14px;
+        }
+
+        .field + .field {
+            margin-top: 14px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            color: var(--text-olive-gray);
+            margin-bottom: 6px;
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            border: 1px solid var(--border-cream);
+            border-radius: 12px;
+            background: var(--bg-white);
+            min-height: 46px;
+            padding: 0 14px;
+            font-size: 15px;
+            color: var(--text-near-black);
+            outline: none;
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: var(--focus-blue);
+            box-shadow: 0 0 0 3px rgba(56, 152, 236, 0.15);
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 46px;
+            border: 1px solid var(--border-cream);
+            border-radius: 12px;
+            background: var(--bg-white);
+            padding: 0 14px;
+        }
+
+        .checkbox-row label {
+            margin: 0;
+            color: var(--text-near-black);
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        button {
+            border: none;
+            border-radius: 10px;
+            min-height: 42px;
+            padding: 0 16px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .primary-btn {
+            background: var(--brand-terracotta);
+            color: var(--bg-white);
+        }
+
+        .secondary-btn {
+            background: var(--border-warm);
+            color: var(--text-near-black);
+        }
+
+        .ghost-btn {
+            background: transparent;
+            border: 1px solid var(--border-cream);
+            color: var(--text-olive-gray);
+        }
+
+        .status-line {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            min-height: 30px;
+            padding: 0 12px;
+            border-radius: 999px;
+            background: var(--bg-white);
+            border: 1px solid var(--border-cream);
+            font-size: 13px;
+            color: var(--text-olive-gray);
+        }
+
+        .progress-list, .result-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .progress-item, .result-item {
+            background: var(--bg-white);
+            border: 1px solid var(--border-cream);
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .progress-item strong, .result-item strong {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        .status-pending { color: var(--text-stone-gray); }
+        .status-running { color: var(--brand-terracotta); }
+        .status-completed { color: var(--success-green); }
+        .status-failed { color: var(--error-crimson); }
+        .status-skipped { color: var(--text-stone-gray); }
+
+        pre {
+            white-space: pre-wrap;
+            word-break: break-word;
+            background: var(--bg-white);
+            border: 1px solid var(--border-cream);
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 13px;
+            overflow-x: auto;
+        }
+
+        .report-box {
+            min-height: 240px;
+        }
+
+        .hint {
+            font-size: 13px;
+            color: var(--text-stone-gray);
+            margin-top: 8px;
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        .status-dot.online { background: var(--success-green); }
+        .status-dot.offline { background: var(--error-crimson); }
+        .status-dot.checking { background: var(--brand-terracotta); animation: pulse 1s infinite; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .settings-btn {
+            background: transparent;
+            border: 1px solid var(--border-cream);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-overlay.hidden { display: none; }
+
+        .modal {
+            background: var(--bg-ivory);
+            border-radius: 12px;
+            padding: 24px;
+            width: 400px;
+            max-width: 90%;
+        }
+        .modal h3 { margin-bottom: 16px; }
+        .modal .field { margin-top: 12px; }
+        .modal .actions { justify-content: flex-end; margin-top: 16px; }
+
+        .api-key-warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 13px;
+            color: #856404;
+            margin-top: 12px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .backend-status {
+            display: flex;
+            align-items: center;
+            font-size: 13px;
+            color: var(--text-olive-gray);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <a class="back-link" href="../../index.html">← 返回首页</a>
+                <h1>执行背景调查</h1>
+                <p class="subtitle">本地前端 + 本地后端 + 模块化调查流水线</p>
+            </div>
+            <div class="header-right">
+                <div class="backend-status" id="backendStatus">
+                    <span class="status-dot checking"></span>
+                    <span>后端连接中...</span>
+                </div>
+                <button class="settings-btn" id="settingsBtn">⚙️ 设置</button>
+            </div>
+        </div>
+
+        <div class="layout">
+            <div>
+                <section class="card">
+                    <h2 class="card-title">调查参数</h2>
+                    <div class="field">
+                        <label for="subjectName">被执行人姓名 / 公司名</label>
+                        <input id="subjectName" type="text" placeholder="请输入姓名或公司名称">
+                    </div>
+                    <div class="field">
+                        <label for="subjectType">类型</label>
+                        <select id="subjectType">
+                            <option value="person">自然人</option>
+                            <option value="company">企业</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="timeRange">调查范围</label>
+                        <select id="timeRange">
+                            <option value="3y">近3年</option>
+                            <option value="5y">近5年</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>附加范围</label>
+                        <div class="checkbox-row">
+                            <input id="includeBidding" type="checkbox">
+                            <label for="includeBidding">查询招投标 / 中标信息</label>
+                        </div>
+                    </div>
+                    <div class="actions">
+                        <button class="primary-btn" id="startButton">开始调查</button>
+                        <button class="secondary-btn" id="refreshButton">刷新状态</button>
+                        <button class="ghost-btn" id="downloadButton">导出 Markdown</button>
+                    </div>
+                    <p class="hint">后端默认地址：<code>http://127.0.0.1:8000</code></p>
+                </section>
+            </div>
+
+            <div>
+                <section class="card">
+                    <h2 class="card-title">执行进度</h2>
+                    <div class="status-line">
+                        <span class="badge" id="taskIdBadge">任务 ID：未启动</span>
+                        <span class="badge" id="statusBadge">状态：未启动</span>
+                        <span class="badge" id="moduleBadge">当前模块：无</span>
+                    </div>
+                    <div class="progress-list" id="progressList"></div>
+                </section>
+
+                <section class="card">
+                    <h2 class="card-title">模块结果</h2>
+                    <div class="result-list" id="resultList"></div>
+                </section>
+
+                <section class="card">
+                    <h2 class="card-title">最终报告</h2>
+                    <pre class="report-box" id="reportBox">尚未生成报告</pre>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置弹窗 -->
+    <div class="modal-overlay hidden" id="settingsModal">
+        <div class="modal">
+            <h3>⚙️ 连接设置</h3>
+            <div class="field">
+                <label for="backendUrlInput">后端地址</label>
+                <input id="backendUrlInput" type="text" placeholder="http://127.0.0.1:8000">
+            </div>
+            <div class="field">
+                <label for="apiKeyInput">API Key（联系管理员获取）</label>
+                <input id="apiKeyInput" type="password" placeholder="输入 API Key">
+            </div>
+            <div class="api-key-warning">
+                ⚠️ API 调用需要积分，请勿泄露 API Key
+            </div>
+            <div class="actions">
+                <button class="ghost-btn" id="cancelSettings">取消</button>
+                <button class="primary-btn" id="saveSettings">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let apiBaseUrl = localStorage.getItem("investigation_api_url") || "http://127.0.0.1:8000";
+        let apiKey = localStorage.getItem("investigation_api_key") || "";
+        let currentTaskId = "";
+        let pollingTimer = null;
+        let healthCheckTimer = null;
+
+        const progressList = document.getElementById("progressList");
+        const resultList = document.getElementById("resultList");
+        const reportBox = document.getElementById("reportBox");
+        const taskIdBadge = document.getElementById("taskIdBadge");
+        const statusBadge = document.getElementById("statusBadge");
+        const moduleBadge = document.getElementById("moduleBadge");
+        const backendStatus = document.getElementById("backendStatus");
+        const settingsModal = document.getElementById("settingsModal");
+        const apiKeyInput = document.getElementById("apiKeyInput");
+
+        // 检查后端连接状态
+        async function checkBackendHealth() {
+            updateBackendStatus("checking");
+            try {
+                const response = await fetch(`${apiBaseUrl}/health`, { timeout: 3000 });
+                if (response.ok) {
+                    updateBackendStatus("online");
+                } else {
+                    updateBackendStatus("offline");
+                }
+            } catch {
+                updateBackendStatus("offline");
+            }
+        }
+
+        function updateBackendStatus(status) {
+            const dot = backendStatus.querySelector(".status-dot");
+            const text = backendStatus.querySelector("span:last-child");
+            dot.className = "status-dot " + status;
+            if (status === "online") {
+                text.textContent = "后端已连接";
+            } else if (status === "offline") {
+                text.textContent = "后端未连接";
+            } else {
+                text.textContent = "后端连接中...";
+            }
+        }
+
+        // 获取请求头
+        function getHeaders() {
+            const headers = { "Content-Type": "application/json" };
+            if (apiKey) {
+                headers["X-API-Key"] = apiKey;
+            }
+            return headers;
+        }
+
+        function setSummary(taskId, status, currentModule) {
+            taskIdBadge.textContent = `任务 ID：${taskId || "未启动"}`;
+            statusBadge.textContent = `状态：${translateStatus(status || "pending")}`;
+            moduleBadge.textContent = `当前模块：${currentModule || "无"}`;
+        }
+
+        function translateStatus(status) {
+            const mapping = {
+                pending: "待执行",
+                running: "执行中",
+                completed: "已完成",
+                failed: "失败",
+                skipped: "已跳过"
+            };
+            return mapping[status] || status;
+        }
+
+        function renderProgress(items) {
+            if (!items || items.length === 0) {
+                progressList.innerHTML = '<div class="progress-item">暂无进度信息</div>';
+                return;
+            }
+
+            progressList.innerHTML = items.map((item) => `
+                <div class="progress-item">
+                    <strong>${item.module_name}</strong>
+                    <span class="status-${item.status}">${translateStatus(item.status)}</span>
+                </div>
+            `).join("");
+        }
+
+        function renderResults(result) {
+            const sections = [
+                ["基础信息", result.basic_info],
+                ["失信限高", result.restriction_info],
+                ["关联企业", result.related_companies],
+                ["涉诉案件", result.litigation_cases],
+                ["重点案件", result.key_cases_for_review],
+                ["案件深挖", result.case_deep_dive],
+                ["招投标", result.bidding_records],
+                ["财产线索", result.asset_clues],
+                ["错误记录", result.errors]
+            ];
+
+            resultList.innerHTML = sections.map(([title, value]) => `
+                <div class="result-item">
+                    <strong>${title}</strong>
+                    <pre>${JSON.stringify(value, null, 2)}</pre>
+                </div>
+            `).join("");
+        }
+
+        async function startInvestigation() {
+            const subjectName = document.getElementById("subjectName").value.trim();
+            if (!subjectName) {
+                alert("请先输入调查主体");
+                return;
+            }
+
+            const payload = {
+                subject_name: subjectName,
+                subject_type: document.getElementById("subjectType").value,
+                time_range: document.getElementById("timeRange").value,
+                include_bidding: document.getElementById("includeBidding").checked
+            };
+
+            const response = await fetch(`${apiBaseUrl}/api/investigation/start`, {
+                method: "POST",
+                headers: getHeaders(),
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const message = await response.text();
+                throw new Error(message || "启动任务失败");
+            }
+
+            const data = await response.json();
+            currentTaskId = data.task_id;
+            setSummary(currentTaskId, data.status, "");
+            beginPolling();
+        }
+
+        async function refreshTask() {
+            if (!currentTaskId) {
+                alert("请先启动任务");
+                return;
+            }
+
+            const statusResponse = await fetch(`${apiBaseUrl}/api/investigation/${currentTaskId}/status`, {
+                headers: getHeaders()
+            });
+            if (!statusResponse.ok) {
+                const msg = await statusResponse.text();
+                throw new Error(msg || "读取任务状态失败");
+            }
+            const statusData = await statusResponse.json();
+            setSummary(statusData.task_id, statusData.status, statusData.current_module);
+            renderProgress(statusData.module_progress || []);
+
+            const resultResponse = await fetch(`${apiBaseUrl}/api/investigation/${currentTaskId}/result`, {
+                headers: getHeaders()
+            });
+            if (!resultResponse.ok) {
+                const msg = await resultResponse.text();
+                throw new Error(msg || "读取任务结果失败");
+            }
+            const resultData = await resultResponse.json();
+            renderResults(resultData);
+            reportBox.textContent = resultData.final_report || "尚未生成报告";
+
+            if (statusData.status === "completed" || statusData.status === "failed") {
+                stopPolling();
+            }
+        }
+
+        function beginPolling() {
+            stopPolling();
+            pollingTimer = window.setInterval(() => {
+                refreshTask().catch((error) => {
+                    console.error(error);
+                    stopPolling();
+                });
+            }, 1500);
+            refreshTask().catch((error) => alert(error.message));
+        }
+
+        function stopPolling() {
+            if (pollingTimer) {
+                window.clearInterval(pollingTimer);
+                pollingTimer = null;
+            }
+        }
+
+        function downloadReport() {
+            if (!currentTaskId) {
+                alert("请先启动任务");
+                return;
+            }
+            window.open(`${apiBaseUrl}/api/investigation/${currentTaskId}/report.md`, "_blank");
+        }
+
+        document.getElementById("startButton").addEventListener("click", async () => {
+            try {
+                await startInvestigation();
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        document.getElementById("refreshButton").addEventListener("click", async () => {
+            try {
+                await refreshTask();
+            } catch (error) {
+                alert(error.message);
+            }
+        });
+
+        document.getElementById("downloadButton").addEventListener("click", downloadReport);
+
+        // 设置弹窗
+        document.getElementById("settingsBtn").addEventListener("click", () => {
+            document.getElementById("backendUrlInput").value = apiBaseUrl;
+            apiKeyInput.value = apiKey;
+            settingsModal.classList.remove("hidden");
+        });
+
+        document.getElementById("cancelSettings").addEventListener("click", () => {
+            settingsModal.classList.add("hidden");
+        });
+
+        document.getElementById("saveSettings").addEventListener("click", () => {
+            const newUrl = document.getElementById("backendUrlInput").value.trim() || "http://127.0.0.1:8000";
+            apiBaseUrl = newUrl;
+            apiKey = apiKeyInput.value.trim();
+            localStorage.setItem("investigation_api_url", apiBaseUrl);
+            localStorage.setItem("investigation_api_key", apiKey);
+            settingsModal.classList.add("hidden");
+            checkBackendHealth();
+        });
+
+        // 点击弹窗背景关闭
+        settingsModal.addEventListener("click", (e) => {
+            if (e.target === settingsModal) {
+                settingsModal.classList.add("hidden");
+            }
+        });
+
+        // 初始化
+        apiKeyInput.value = apiKey;
+        checkBackendHealth();
+        // 每 30 秒检查一次后端状态
+        healthCheckTimer = setInterval(checkBackendHealth, 30000);
+
+        renderProgress([]);
+        renderResults({
+            basic_info: {},
+            restriction_info: {},
+            related_companies: [],
+            litigation_cases: [],
+            key_cases_for_review: [],
+            case_deep_dive: [],
+            bidding_records: [],
+            asset_clues: [],
+            errors: []
+        });
+    </script>
+</body>
+</html>

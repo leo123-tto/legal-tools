@@ -13,11 +13,24 @@
 - **高速自驾游**：竖屏驾驶小游戏，滑动控制，学习高速路网知识、车牌知识和口算练习
 - **五子棋**：经典棋类小游戏，支持单人/双人模式，三种AI难度
 - **HTML 可视化编辑器**：快速修改 HTML 汇报材料，支持文字直编、图片替换、进度条联动、样式编辑和一键导出
+- **执行背景调查**：本地前端 + FastAPI 后端 + 模块化调查流水线，支持任务进度、模块结果和 Markdown 报告导出
 - **利息/执行款计算器**：计算借款利息（支持多本金、LPR历史数据），计算执行款（支持多案、还款抵扣、迟延履行利息）
 
 ## 使用方式
 
 直接在浏览器中打开 `index.html` 即可使用。
+
+若要使用“执行背景调查”工具，需要先启动本地后端：
+
+```bash
+cd investigation-tool/backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+```
+
+然后单独打开 `investigation-tool/frontend/index.html`，或从主页入口进入。
 
 ## 在线访问
 
@@ -43,12 +56,23 @@ legal-tools/
 ├── html-editor/                  # HTML 可视化编辑器
 │   ├── index.html        # 单文件应用
 │   └── DEV.md            # 开发文档
+├── investigation-tool/   # 执行背景调查工具
+│   ├── frontend/index.html
+│   ├── backend/          # FastAPI 本地后端
+│   ├── data/tasks/       # 任务状态持久化
+│   └── reports/          # Markdown 报告导出
 └── .github/workflows/   # GitHub Actions 自动部署
 ```
 
 ## 技术栈
 
-纯静态 HTML + CSS + JavaScript，零框架，零构建工具
+纯静态 HTML + CSS + JavaScript，零框架，零构建工具。
+
+“执行背景调查”子项目额外包含：
+- FastAPI
+- Pydantic
+- httpx
+- 本地 LM Studio OpenAI 兼容接口
 
 ## 部署说明
 

@@ -1,0 +1,19 @@
+# Environment variables (contains API keys)
+.env
+.env.local
+.env.production
+
+# Reports
+reports/*.md
+
+# Task data
+data/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# IDE
+.idea/
+.vscode/

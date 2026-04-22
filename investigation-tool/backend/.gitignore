@@ -1,5 +1,3 @@
-.DS_Store
-
 # Environment variables (contains API keys)
 .env
 .env.local
@@ -19,11 +17,7 @@ ENV/
 *.swp
 
 # Reports (user data)
-investigation-tool/backend/reports/*.md
-investigation-tool/backend/data/tasks/*.json
+reports/*.md
 
-# Memory and workspace
-.claude/
-.omc/
-memory/
-mino/
+# Task data
+data/tasks/*.json
