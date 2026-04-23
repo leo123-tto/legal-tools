@@ -42,6 +42,7 @@
         pre { white-space: pre-wrap; word-break: break-word; background: var(--bg-white); border: 1px solid var(--border-cream); border-radius: 10px; padding: 14px; font-size: 13px; overflow-x: auto; min-height: 200px; }
         .lm-status { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-olive-gray); margin-top: 8px; }
         .hint { font-size: 13px; color: var(--text-stone-gray); margin-top: 8px; }
+        .danger-btn { background: var(--error-crimson); color: white; }
         @media(max-width:900px) { .layout { grid-template-columns: 1fr; } }
         .lm-dot { width: 7px; height: 7px; border-radius: 50%; }
         .lm-dot.online { background: var(--success-green); }
@@ -84,6 +85,7 @@
             <div class="actions">
                 <button class="primary-btn" id="startBtn">开始调查</button>
                 <button class="secondary-btn" id="refreshBtn">刷新</button>
+                <button class="danger-btn" id="stopBtn">停止</button>
                 <button class="ghost-btn" id="downloadBtn">导出报告</button>
             </div>
             <div class="lm-status">
@@ -189,6 +191,23 @@ function stopPolling() { if (pollingTimer) { clearInterval(pollingTimer); pollin
 document.getElementById('startBtn').onclick = start;
 document.getElementById('refreshBtn').onclick = refresh;
 document.getElementById('downloadBtn').onclick = () => { if (!currentTaskId) { alert('请先开始调查'); return; } window.open(`${API_BASE}/api/investigation/${currentTaskId}/report.md`); };
+document.getElementById('stopBtn').onclick = async () => {
+    if (!confirm('确定停止后端？这会终止当前所有调查任务。')) return;
+    stopPolling();
+    currentTaskId = '';
+    setSummary('', 'pending', '');
+    renderProgress([]);
+    renderResults({basic_info:{},restriction_info:{},related_companies:[],litigation_cases:[],case_deep_dive:[],bidding_records:[],errors:[]});
+    document.getElementById('reportBox').textContent = '已停止';
+    try {
+        if (window.__TAURI__) {
+            const { invoke } = window.__TAURI__.core;
+            await invoke('stop_backend');
+        } else {
+            await fetch(`${API_BASE}/api/system/stop`, { method:'POST' }).catch(()=>{});
+        }
+    } catch(e) { console.warn('停止后端失败:', e); }
+};
 
 // Listen for LM Studio events from parent (Tauri iframe)
 window.addEventListener('message', (e) => {
