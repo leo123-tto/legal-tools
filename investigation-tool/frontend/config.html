@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>配置 - 执行背景调查</title>
+    <style>
+        :root { --bg-parchment:#f5f4ed; --bg-ivory:#faf9f5; --bg-white:#ffffff; --brand-terracotta:#c96442; --text-near-black:#141413; --text-olive-gray:#5e5d59; --text-stone-gray:#87867f; --border-cream:#f0eee6; --border-warm:#e8e6dc; --error-crimson:#b53333; --success-green:#4f7a5a; --shadow-whisper:rgba(0,0,0,0.05) 0px 4px 24px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg-parchment); font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif; line-height: 1.6; padding: 20px 24px 40px; }
+        h1 { font-family: Georgia, serif; font-size: 22px; font-weight: 500; margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .card { background: var(--bg-ivory); border: 1px solid var(--border-cream); border-radius: 12px; box-shadow: var(--shadow-whisper); padding: 20px; }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: var(--text-near-black); }
+        .field + .field { margin-top: 14px; }
+        label { display: block; font-size: 13px; color: var(--text-olive-gray); margin-bottom: 5px; }
+        label .hint { font-weight: normal; color: var(--text-stone-gray); font-size: 12px; }
+        input[type="text"], input[type="password"], input[type="number"], select { width: 100%; border: 1px solid var(--border-cream); border-radius: 10px; background: var(--bg-white); min-height: 40px; padding: 0 12px; font-size: 14px; color: var(--text-near-black); outline: none; }
+        input:focus, select:focus { border-color: #3898ec; box-shadow: 0 0 0 3px rgba(56,152,236,0.15); }
+        .actions { margin-top: 18px; display: flex; gap: 10px; }
+        button { border: none; border-radius: 10px; min-height: 38px; padding: 0 16px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .save-btn { background: var(--brand-terracotta); color: white; }
+        .reset-btn { background: var(--border-warm); color: var(--text-near-black); }
+        .notice { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 10px 12px; font-size: 13px; color: #856404; margin-top: 12px; }
+        .module-list { display: grid; gap: 6px; }
+        .module-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg-white); border-radius: 8px; border: 1px solid var(--border-cream); }
+        .module-name { font-size: 14px; color: var(--text-near-black); }
+        .module-id { font-size: 12px; color: var(--text-stone-gray); font-family: monospace; }
+        .toggle { position: relative; width: 40px; height: 22px; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; inset: 0; background: #ccc; border-radius: 22px; transition: 0.2s; }
+        .toggle-slider::before { content: ''; position: absolute; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+        .toggle input:checked + .toggle-slider { background: var(--brand-terracotta); }
+        .toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
+        .key-list { display: grid; gap: 6px; }
+        .key-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--bg-white); border-radius: 8px; border: 1px solid var(--border-cream); font-size: 13px; }
+        .key-name { color: var(--text-olive-gray); }
+        .key-val { font-family: monospace; color: var(--text-near-black); font-size: 12px; }
+        .key-status { font-size: 12px; padding: 2px 8px; border-radius: 999px; }
+        .key-status.active { background: #e8f5e9; color: var(--success-green); }
+        .key-status.inactive { background: #f5f5f5; color: var(--text-stone-gray); }
+        .key-status.error { background: #ffebee; color: var(--error-crimson); }
+        @media(max-width:800px) { .grid { grid-template-columns: 1fr; } }
+        .success-msg { background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 8px; padding: 10px 12px; font-size: 13px; color: var(--success-green); margin-top: 12px; display: none; }
+        .error-msg { background: #ffebee; border: 1px solid #ffcdd2; border-radius: 8px; padding: 10px 12px; font-size: 13px; color: var(--error-crimson); margin-top: 12px; display: none; }
+    </style>
+</head>
+<body>
+<h1>⚙️ 配置中心</h1>
+<div class="grid">
+    <div>
+        <div class="card">
+            <div class="card-title">🤖 报告生成模型</div>
+            <div class="field">
+                <label>Provider</label>
+                <select id="reportProvider">
+                    <option value="lm_studio">LM Studio（本地）</option>
+                    <option value="hermes">Hermes Agent API Server</option>
+                    <option value="cloud">云端中转站</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>API Base URL</label>
+                <input id="apiBaseUrl" type="text" placeholder="http://127.0.0.1:1234/v1">
+            </div>
+            <div class="field">
+                <label>API Key <span class="hint">（不填则使用环境变量）</span></label>
+                <input id="apiKey" type="password" placeholder="留空则使用 .env 中的配置">
+            </div>
+            <div class="field">
+                <label>Model</label>
+                <input id="modelName" type="text" placeholder="gemma-4-26b-a4b-it">
+            </div>
+            <div class="field">
+                <label>Temperature</label>
+                <input id="temperature" type="number" step="0.1" min="0" max="2" value="0.3">
+            </div>
+            <div class="notice">⚠️ 修改后需要重启后端才能生效</div>
+            <div id="successMsg" class="success-msg">✅ 配置已保存，后端将在 3 秒后自动重启</div>
+            <div id="errorMsg" class="error-msg"></div>
+            <div class="actions">
+                <button class="save-btn" id="saveBtn">💾 保存配置</button>
+                <button class="reset-btn" id="resetBtn">🔄 重置</button>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top:18px">
+            <div class="card-title">🔑 访问控制</div>
+            <div class="field">
+                <label>后端 API Key</label>
+                <input id="accessKey" type="password" placeholder="设置访问密钥">
+            </div>
+            <div class="notice">⚠️ 修改后刷新页面，使用新密钥访问</div>
+            <div class="actions">
+                <button class="save-btn" id="saveAccessBtn">💾 保存</button>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card">
+            <div class="card-title">📦 模块开关</div>
+            <div class="module-list" id="moduleList"></div>
+        </div>
+
+        <div class="card" style="margin-top:18px">
+            <div class="card-title">🔑 Key 池状态</div>
+            <div class="key-list" id="keyList"><div style="color:var(--text-olive-gray);font-size:13px;text-align:center;padding:12px">加载中...</div></div>
+        </div>
+    </div>
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8000';
+const KEY = localStorage.getItem('investigation_api_key')||'';
+function hdrs() { const h={'Content-Type':'application/json'}; if(KEY) h['X-API-Key']=KEY; return h; }
+function show(id,msg) { const el=document.getElementById(id); el.textContent=msg; el.style.display='block'; setTimeout(()=>el.style.display='none',4000); }
+
+async function loadConfig() {
+    try {
+        const r = await fetch(`${API}/api/config/models`, {headers:hdrs()});
+        if (!r.ok) return;
+        const d = await r.json();
+        document.getElementById('reportProvider').value = d.report_provider||'lm_studio';
+        document.getElementById('apiBaseUrl').value = d.api_base_url||'';
+        document.getElementById('modelName').value = d.report_model||'';
+        document.getElementById('temperature').value = d.temperature??0.3;
+    } catch {}
+    try {
+        const r2 = await fetch(`${API}/api/config/access`, {headers:hdrs()});
+        if (r2.ok) {
+            const d2 = await r2.json();
+            document.getElementById('accessKey').value = d2.allowed_keys?.[0]||'';
+        }
+    } catch {}
+}
+
+async function loadModules() {
+    try {
+        const r = await fetch(`${API}/api/config/modules`, {headers:hdrs()});
+        if (!r.ok) return;
+        const mods = await r.json();
+        document.getElementById('moduleList').innerHTML = mods.map(m => `
+            <div class="module-row">
+                <div>
+                    <div class="module-name">${m.name||m.module_id}</div>
+                    <div class="module-id">${m.module_id}</div>
+                </div>
+                <label class="toggle">
+                    <input type="checkbox" ${m.enabled?'checked':''} data-id="${m.module_id}">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>`).join('');
+    } catch {}
+}
+
+async function loadKeys() {
+    try {
+        const r = await fetch(`${API}/api/config/keys`, {headers:hdrs()});
+        if (!r.ok) throw new Error();
+        const d = await r.json();
+        const html = [];
+        for (const [name, info] of Object.entries(d)) {
+            const status = info.error?'error':info.used?'inactive':'active';
+            const label = info.error?'异常':info.used?'已用':'可用';
+            html.push(`<div class="key-item">
+                <span class="key-name">${name}</span>
+                <span class="key-val">${info.count||0}次</span>
+                <span class="key-status ${status}">${label}</span>
+            </div>`);
+        }
+        document.getElementById('keyList').innerHTML = html.join('') || '<div style="color:var(--text-olive-gray);font-size:13px;text-align:center;padding:12px">暂无 Key 数据</div>';
+    } catch {
+        document.getElementById('keyList').innerHTML='<div style="color:var(--error-crimson);font-size:13px;padding:12px">加载失败</div>';
+    }
+}
+
+document.getElementById('saveBtn').onclick = async () => {
+    const payload = {
+        report_provider: document.getElementById('reportProvider').value,
+        api_base_url: document.getElementById('apiBaseUrl').value,
+        report_model: document.getElementById('modelName').value,
+        temperature: parseFloat(document.getElementById('temperature').value),
+    };
+    const key = document.getElementById('apiKey').value.trim();
+    if (key) payload.api_key = key;
+    try {
+        const r = await fetch(`${API}/api/config/models`, {method:'PUT', headers:hdrs(), body:JSON.stringify(payload)});
+        if (!r.ok) throw new Error(await r.text());
+        show('successMsg','✅ 配置已保存，后端将在 3 秒后自动重启');
+    } catch(e) { show('errorMsg','❌ 保存失败：'+e.message); }
+};
+
+document.getElementById('resetBtn').onclick = loadConfig;
+
+loadConfig();
+loadModules();
+loadKeys();
+</script>
+</body>
+</html>

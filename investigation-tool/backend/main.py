@@ -1,4 +1,6 @@
 from app.api.investigation import router as investigation_router
+from app.api.config import router as config_router
+from app.api.system import router as system_router
 from app.middleware.auth import APIKeyMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,6 +19,8 @@ app.add_middleware(
 app.add_middleware(APIKeyMiddleware)
 
 app.include_router(investigation_router)
+app.include_router(config_router)
+app.include_router(system_router)
 
 
 @app.get("/health")

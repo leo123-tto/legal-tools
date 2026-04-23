@@ -29,8 +29,14 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
     """API Key 认证中间件"""
 
     async def dispatch(self, request: Request, call_next):
-        # 跳过健康检查和文档
-        if request.url.path in ("/health", "/docs", "/openapi.json", "/redoc"):
+        # 跳过健康检查和公开端点
+        if request.url.path in (
+            "/health",
+            "/docs",
+            "/openapi.json",
+            "/redoc",
+            "/api/system/status",
+        ):
             return await call_next(request)
 
         # 验证 API Key

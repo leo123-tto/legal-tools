@@ -17,3 +17,7 @@ __pycache__/
 # IDE
 .idea/
 .vscode/
+
+# Tauri build artifacts
+src-tauri/target/
+src-tauri/Cargo.lock

@@ -27,6 +27,40 @@ def run_pipeline(task_id: str) -> None:
     report_path.write_text(result.final_report or "", encoding="utf-8")
 
 
+# 静态路由放前面，避免被 /{task_id} 误匹配
+@router.get("/")
+def list_investigations() -> list[dict]:
+    """返回所有任务摘要列表（按修改时间倒序）。"""
+    if not DATA_DIR.exists():
+        return []
+    tasks = []
+    for f in sorted(DATA_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True):
+        try:
+            import json
+
+            ctx = json.loads(f.read_text())
+            tasks.append(
+                {
+                    "task_id": ctx.get("task_id", f.stem),
+                    "status": ctx.get("status", "unknown"),
+                    "subject_name": ctx.get("subject_name", ""),
+                    "subject_type": ctx.get("subject_type", ""),
+                }
+            )
+        except Exception:
+            pass
+    return tasks
+
+
+@router.get("/{task_id}/logs")
+def get_task_logs(task_id: str) -> list[dict]:
+    """返回指定任务的日志列表。"""
+    if not store.exists(task_id):
+        raise HTTPException(status_code=404, detail="任务不存在")
+    context = store.load(task_id)
+    return [log.model_dump() for log in context.logs]
+
+
 @router.post("/start")
 def start_investigation(request: InvestigationRequest, background_tasks: BackgroundTasks) -> dict:
     context = build_investigation_context(request)

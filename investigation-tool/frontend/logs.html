@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日志 - 执行背景调查</title>
+    <style>
+        :root { --bg-parchment:#f5f4ed; --bg-ivory:#faf9f5; --bg-white:#ffffff; --brand-terracotta:#c96442; --text-near-black:#141413; --text-olive-gray:#5e5d59; --border-cream:#f0eee6; --border-warm:#e8e6dc; --error-crimson:#b53333; --success-green:#4f7a5a; --warning:#d4a017; --shadow-whisper:rgba(0,0,0,0.05) 0px 4px 24px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg-parchment); font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif; line-height: 1.6; padding: 20px 24px 40px; }
+        .page-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+        h1 { font-family: Georgia, serif; font-size: 22px; font-weight: 500; }
+        select, button { border: 1px solid var(--border-cream); border-radius: 10px; min-height: 38px; padding: 0 14px; font-size: 14px; cursor: pointer; background: var(--bg-white); }
+        button { font-weight: 600; background: var(--brand-terracotta); color: white; border: none; }
+        .card { background: var(--bg-ivory); border: 1px solid var(--border-cream); border-radius: 12px; box-shadow: var(--shadow-whisper); padding: 20px; }
+        .log-list { display: grid; gap: 6px; max-height: 70vh; overflow-y: auto; }
+        .log-item { display: grid; grid-template-columns: 160px 80px 1fr; gap: 12px; padding: 8px 12px; background: var(--bg-white); border-radius: 8px; font-size: 13px; align-items: start; }
+        .log-time { color: var(--text-olive-gray); font-size: 12px; }
+        .log-level { font-weight: 600; font-size: 12px; padding: 1px 8px; border-radius: 999px; text-align: center; }
+        .level-info { background: #e8f5e9; color: var(--success-green); }
+        .level-warning { background: #fff8e1; color: var(--warning); }
+        .level-error { background: #ffebee; color: var(--error-crimson); }
+        .log-msg { color: var(--text-near-black); word-break: break-word; }
+        .empty { color: var(--text-olive-gray); font-size: 14px; padding: 20px; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="page-header">
+    <h1>📜 调查日志</h1>
+    <select id="taskSelect"><option value="">— 选择任务 —</option></select>
+    <button id="loadBtn">加载日志</button>
+</div>
+<div class="card">
+    <div class="log-list" id="logList"><div class="empty">选择任务后点击"加载日志"</div></div>
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8000';
+const KEY = localStorage.getItem('investigation_api_key')||'';
+function hdrs() { const h={'Content-Type':'application/json'}; if(KEY) h['X-API-Key']=KEY; return h; }
+
+async function loadTasks() {
+    try {
+        const r = await fetch(`${API}/api/investigation/`, {headers:hdrs()});
+        if (!r.ok) return;
+        const tasks = await r.json();
+        const sel = document.getElementById('taskSelect');
+        sel.innerHTML = '<option value="">— 选择任务 —</option>';
+        tasks.forEach(t => {
+            const o = document.createElement('option');
+            o.value = t.task_id;
+            o.textContent = `${t.task_id.slice(0,8)}... | ${t.status} | ${t.subject_name||''}`;
+            sel.appendChild(o);
+        });
+    } catch {}
+}
+
+async function loadLogs() {
+    const tid = document.getElementById('taskSelect').value;
+    if (!tid) { alert('请选择任务'); return; }
+    const box = document.getElementById('logList');
+    box.innerHTML = '<div class="empty">加载中...</div>';
+    try {
+        const r = await fetch(`${API}/api/investigation/${tid}/logs`, {headers:hdrs()});
+        if (!r.ok) throw new Error(await r.text());
+        const logs = await r.json();
+        if (!logs.length) { box.innerHTML='<div class="empty">暂无日志</div>'; return; }
+        box.innerHTML = logs.map(l => `
+            <div class="log-item">
+                <span class="log-time">${l.timestamp||''}</span>
+                <span class="log-level level-${l.level||'info'}">${l.level||'info'}</span>
+                <span class="log-msg">${l.module_id}: ${l.message||''}</span>
+            </div>`).join('');
+    } catch(e) { box.innerHTML=`<div class="empty" style="color:var(--error-crimson)">加载失败：${e.message}</div>`; }
+}
+
+document.getElementById('loadBtn').onclick = loadLogs;
+loadTasks();
+</script>
+</body>
+</html>

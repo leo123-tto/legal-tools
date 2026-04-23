@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>状态 - 执行背景调查</title>
+    <style>
+        :root { --bg-parchment:#f5f4ed; --bg-ivory:#faf9f5; --bg-white:#ffffff; --brand-terracotta:#c96442; --text-near-black:#141413; --text-olive-gray:#5e5d59; --text-stone-gray:#87867f; --border-cream:#f0eee6; --border-warm:#e8e6dc; --error-crimson:#b53333; --success-green:#4f7a5a; --shadow-whisper:rgba(0,0,0,0.05) 0px 4px 24px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg-parchment); font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif; line-height: 1.6; padding: 20px 24px 40px; }
+        h1 { font-family: Georgia, serif; font-size: 22px; font-weight: 500; margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+        .card { background: var(--bg-ivory); border: 1px solid var(--border-cream); border-radius: 12px; box-shadow: var(--shadow-whisper); padding: 20px; }
+        .card-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: var(--text-near-black); }
+        .status-row { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-olive-gray); margin-bottom: 8px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .dot.online { background: var(--success-green); }
+        .dot.offline { background: var(--error-crimson); }
+        .dot.checking { background: var(--brand-terracotta); animation: pulse 1s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .task-list { display: grid; gap: 8px; max-height: 300px; overflow-y: auto; }
+        .task-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--bg-white); border-radius: 8px; border: 1px solid var(--border-cream); }
+        .task-id { font-size: 13px; color: var(--text-olive-gray); font-family: monospace; }
+        .task-name { font-size: 13px; color: var(--text-near-black); flex: 1; margin: 0 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .task-badge { font-size: 12px; padding: 2px 10px; border-radius: 999px; font-weight: 600; }
+        .badge-pending { background: #f0eee6; color: var(--text-olive-gray); }
+        .badge-running { background: #fff3e0; color: #e65100; }
+        .badge-completed { background: #e8f5e9; color: var(--success-green); }
+        .badge-failed { background: #ffebee; color: var(--error-crimson); }
+        .badge-skipped { background: #f5f5f5; color: var(--text-stone-gray); }
+        .refresh-btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border-cream); border-radius: 8px; background: var(--bg-white); padding: 6px 14px; font-size: 13px; cursor: pointer; color: var(--text-olive-gray); }
+        .info-item { font-size: 13px; color: var(--text-olive-gray); margin-bottom: 4px; }
+        .info-label { color: var(--text-stone-gray); }
+        .info-val { color: var(--text-near-black); font-weight: 500; }
+    </style>
+</head>
+<body>
+<h1>📊 系统状态</h1>
+<div class="grid">
+    <div class="card">
+        <div class="card-title">🔧 后端服务</div>
+        <div class="status-row"><span class="dot checking" id="backendDot"></span><span id="backendText">检测中...</span></div>
+        <div class="info-item"><span class="info-label">地址：</span><span class="info-val">http://127.0.0.1:8000</span></div>
+        <div class="info-item"><span class="info-label">版本：</span><span class="info-val">FastAPI 0.1.0</span></div>
+        <button class="refresh-btn" onclick="loadStatus()" style="margin-top:10px">🔄 刷新状态</button>
+    </div>
+    <div class="card">
+        <div class="card-title">🤖 LM Studio</div>
+        <div class="status-row"><span class="dot offline" id="lmDot"></span><span id="lmText">未检测到</span></div>
+        <div class="info-item" id="lmModels">可用模型：—</div>
+    </div>
+    <div class="card">
+        <div class="card-title">📋 任务概览</div>
+        <div class="info-item"><span class="info-label">总任务数：</span><span class="info-val" id="totalTasks">—</span></div>
+        <div class="info-item"><span class="info-label">已完成：</span><span class="info-val" id="completedTasks">—</span></div>
+        <div class="info-item"><span class="info-label">执行中：</span><span class="info-val" id="runningTasks">—</span></div>
+    </div>
+    <div class="card" style="grid-column: 1/-1">
+        <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+            📂 最近任务
+            <button class="refresh-btn" onclick="loadTasks()">🔄 刷新</button>
+        </div>
+        <div class="task-list" id="taskList"></div>
+    </div>
+</div>
+
+<script>
+const API = 'http://127.0.0.1:8000';
+const KEY = localStorage.getItem('investigation_api_key')||'';
+function hdrs() { const h={'Content-Type':'application/json'}; if(KEY) h['X-API-Key']=KEY; return h; }
+function translate(s) { return {pending:'待执行',running:'执行中',completed:'已完成',failed:'失败',skipped:'已跳过'}[s]||s; }
+function badgeClass(s) { return 'task-badge badge-'+(s||'pending'); }
+
+async function loadStatus() {
+    try {
+        const r = await fetch(`${API}/api/system/status`);
+        if (!r.ok) throw new Error();
+        const d = await r.json();
+        const bd = document.getElementById('backendDot');
+        bd.className = 'dot '+(d.backend?.running?'online':'offline');
+        document.getElementById('backendText').textContent = d.backend?.running?'运行中':'已停止';
+        const lm = d.lm_studio;
+        document.getElementById('lmDot').className = 'dot '+(lm?.online?'online':'offline');
+        document.getElementById('lmText').textContent = lm?.online?'在线':'未启动';
+        document.getElementById('lmModels').textContent = '可用模型：'+(lm?.models?.join(', ')||'—');
+        document.getElementById('totalTasks').textContent = d.total_tasks??'—';
+        document.getElementById('completedTasks').textContent = d.completed_tasks??'—';
+        document.getElementById('runningTasks').textContent = d.running_tasks??'—';
+    } catch {
+        document.getElementById('backendDot').className='dot offline';
+        document.getElementById('backendText').textContent='无法连接';
+    }
+}
+
+async function loadTasks() {
+    try {
+        const r = await fetch(`${API}/api/investigation/`, {headers:hdrs()});
+        if (!r.ok) throw new Error();
+        const tasks = await r.json();
+        const list = document.getElementById('taskList');
+        if (!tasks.length) { list.innerHTML='<div style="color:var(--text-olive-gray);font-size:14px;text-align:center;padding:20px">暂无任务记录</div>'; return; }
+        list.innerHTML = tasks.slice(0,20).map(t => `
+            <div class="task-item">
+                <span class="task-id">${t.task_id?.slice(0,8)}...</span>
+                <span class="task-name">${t.subject_name||'—'}</span>
+                <span class="${badgeClass(t.status)}">${translate(t.status)}</span>
+            </div>`).join('');
+        document.getElementById('totalTasks').textContent = tasks.length;
+        document.getElementById('completedTasks').textContent = tasks.filter(t=>t.status==='completed').length;
+        document.getElementById('runningTasks').textContent = tasks.filter(t=>t.status==='running').length;
+    } catch(e) {
+        document.getElementById('taskList').innerHTML=`<div style="color:var(--error-crimson);font-size:14px;padding:20px">加载失败</div>`;
+    }
+}
+
+// Listen for LM Studio events from parent
+window.addEventListener('message', (e) => {
+    if (e.data?.type==='lm-studio-status') {
+        const {online, models} = e.data.data;
+        document.getElementById('lmDot').className='dot '+(online?'online':'offline');
+        document.getElementById('lmText').textContent = online?'在线':'未启动';
+        document.getElementById('lmModels').textContent = '可用模型：'+(models?.join(', ')||'—');
+    }
+});
+
+loadStatus();
+loadTasks();
+</script>
+</body>
+</html>

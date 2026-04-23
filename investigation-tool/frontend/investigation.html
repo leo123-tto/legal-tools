@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>调查 - 执行背景调查</title>
+    <style>
+        :root {
+            --bg-parchment: #f5f4ed; --bg-ivory: #faf9f5; --bg-white: #ffffff;
+            --brand-terracotta: #c96442; --text-near-black: #141413;
+            --text-olive-gray: #5e5d59; --text-stone-gray: #87867f;
+            --border-cream: #f0eee6; --border-warm: #e8e6dc;
+            --focus-blue: #3898ec; --error-crimson: #b53333; --success-green: #4f7a5a;
+            --shadow-whisper: rgba(0,0,0,0.05) 0px 4px 24px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: var(--bg-parchment); color: var(--text-near-black);
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+            line-height: 1.6; padding: 20px 24px 40px;
+        }
+        .layout { display: grid; grid-template-columns: 340px 1fr; gap: 18px; max-width: 1200px; }
+        .card { background: var(--bg-ivory); border: 1px solid var(--border-cream); border-radius: 12px; box-shadow: var(--shadow-whisper); padding: 20px; }
+        .card + .card { margin-top: 18px; }
+        .card-title { font-family: Georgia, serif; font-size: 18px; font-weight: 500; margin-bottom: 14px; }
+        .field + .field { margin-top: 14px; }
+        label { display: block; font-size: 14px; color: var(--text-olive-gray); margin-bottom: 6px; }
+        input[type="text"], select { width: 100%; border: 1px solid var(--border-cream); border-radius: 12px; background: var(--bg-white); min-height: 44px; padding: 0 14px; font-size: 15px; color: var(--text-near-black); outline: none; }
+        input:focus, select:focus { border-color: var(--focus-blue); box-shadow: 0 0 0 3px rgba(56,152,236,0.15); }
+        .checkbox-row { display: flex; align-items: center; gap: 8px; min-height: 44px; border: 1px solid var(--border-cream); border-radius: 12px; background: var(--bg-white); padding: 0 14px; }
+        .checkbox-row label { margin: 0; color: var(--text-near-black); }
+        .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+        button { border: none; border-radius: 10px; min-height: 40px; padding: 0 16px; font-size: 14px; font-weight: 600; cursor: pointer; }
+        .primary-btn { background: var(--brand-terracotta); color: white; }
+        .secondary-btn { background: var(--border-warm); color: var(--text-near-black); }
+        .ghost-btn { background: transparent; border: 1px solid var(--border-cream); color: var(--text-olive-gray); }
+        .badge { display: inline-flex; align-items: center; min-height: 28px; padding: 0 12px; border-radius: 999px; background: var(--bg-white); border: 1px solid var(--border-cream); font-size: 13px; color: var(--text-olive-gray); }
+        .status-line { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+        .progress-item, .result-item { background: var(--bg-white); border: 1px solid var(--border-cream); border-radius: 10px; padding: 12px 14px; }
+        .progress-item strong, .result-item strong { display: block; margin-bottom: 6px; font-size: 14px; }
+        .progress-list, .result-list { display: grid; gap: 8px; }
+        pre { white-space: pre-wrap; word-break: break-word; background: var(--bg-white); border: 1px solid var(--border-cream); border-radius: 10px; padding: 14px; font-size: 13px; overflow-x: auto; min-height: 200px; }
+        .lm-status { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-olive-gray); margin-top: 8px; }
+        .hint { font-size: 13px; color: var(--text-stone-gray); margin-top: 8px; }
+        @media(max-width:900px) { .layout { grid-template-columns: 1fr; } }
+        .lm-dot { width: 7px; height: 7px; border-radius: 50%; }
+        .lm-dot.online { background: var(--success-green); }
+        .lm-dot.offline { background: var(--error-crimson); }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <div>
+        <section class="card">
+            <h2 class="card-title">调查参数</h2>
+            <div class="field">
+                <label>被执行人 / 公司名</label>
+                <input id="subjectName" type="text" placeholder="请输入姓名或公司名称">
+            </div>
+            <div class="field">
+                <label>统一社会信用代码（18位）</label>
+                <input id="creditCode" type="text" placeholder="有则填写，元典查询必需">
+            </div>
+            <div class="field">
+                <label>类型</label>
+                <select id="subjectType">
+                    <option value="company">企业</option>
+                    <option value="person">自然人</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>调查范围</label>
+                <select id="timeRange">
+                    <option value="3y">近3年</option>
+                    <option value="5y">近5年</option>
+                </select>
+            </div>
+            <div class="field">
+                <div class="checkbox-row">
+                    <input id="supplementQichacha" type="checkbox">
+                    <label for="supplementQichacha">元典查到后，用企查查补充查询</label>
+                </div>
+            </div>
+            <div class="actions">
+                <button class="primary-btn" id="startBtn">开始调查</button>
+                <button class="secondary-btn" id="refreshBtn">刷新</button>
+                <button class="ghost-btn" id="downloadBtn">导出报告</button>
+            </div>
+            <div class="lm-status">
+                <span class="lm-dot offline" id="lmDot"></span>
+                <span id="lmText">LM Studio 未检测到</span>
+            </div>
+        </section>
+    </div>
+    <div>
+        <section class="card">
+            <h2 class="card-title">执行进度</h2>
+            <div class="status-line">
+                <span class="badge" id="taskIdBadge">任务 ID：—</span>
+                <span class="badge" id="statusBadge">状态：—</span>
+                <span class="badge" id="moduleBadge">当前：—</span>
+            </div>
+            <div class="progress-list" id="progressList"></div>
+        </section>
+        <section class="card">
+            <h2 class="card-title">模块结果</h2>
+            <div class="result-list" id="resultList"></div>
+        </section>
+        <section class="card">
+            <h2 class="card-title">最终报告</h2>
+            <pre id="reportBox">尚未生成报告</pre>
+        </section>
+    </div>
+</div>
+
+<script>
+const API_BASE = 'http://127.0.0.1:8000';
+const API_KEY = localStorage.getItem('investigation_api_key') || '';
+let currentTaskId = '';
+let pollingTimer = null;
+
+function headers() {
+    const h = { 'Content-Type': 'application/json' };
+    if (API_KEY) h['X-API-Key'] = API_KEY;
+    return h;
+}
+function translate(s) {
+    return {pending:'待执行',running:'执行中',completed:'已完成',failed:'失败',skipped:'已跳过'}[s]||s;
+}
+function setSummary(taskId, status, module) {
+    document.getElementById('taskIdBadge').textContent = `任务 ID：${taskId||'—'}`;
+    document.getElementById('statusBadge').textContent = `状态：${translate(status||'pending')}`;
+    document.getElementById('moduleBadge').textContent = `当前：${module||'无'}`;
+}
+function renderProgress(items) {
+    if (!items?.length) { document.getElementById('progressList').innerHTML='<div class="progress-item">暂无进度</div>'; return; }
+    document.getElementById('progressList').innerHTML = items.map(i=>`<div class="progress-item"><strong>${i.module_name}</strong><span>${translate(i.status)}</span></div>`).join('');
+}
+function renderResults(r) {
+    const secs = [['基础信息',r.basic_info],['失信限高',r.restriction_info],['关联企业',r.related_companies],
+        ['涉诉案件',r.litigation_cases],['案件深挖',r.case_deep_dive],['招投标',r.bidding_records],['错误',r.errors]];
+    document.getElementById('resultList').innerHTML = secs.map(([t,v])=>`<div class="result-item"><strong>${t}</strong><pre>${JSON.stringify(v,null,2)}</pre></div>`).join('');
+}
+
+async function start() {
+    const name = document.getElementById('subjectName').value.trim();
+    if (!name) { alert('请输入调查主体'); return; }
+    const payload = { subject_name: name, subject_type: document.getElementById('subjectType').value,
+        time_range: document.getElementById('timeRange').value,
+        supplement_qichacha: document.getElementById('supplementQichacha').checked };
+    const cc = document.getElementById('creditCode').value.trim();
+    if (cc) payload.credit_code = cc;
+    try {
+        const r = await fetch(`${API_BASE}/api/investigation/start`, { method:'POST', headers:headers(), body:JSON.stringify(payload) });
+        if (!r.ok) throw new Error(await r.text());
+        const d = await r.json();
+        currentTaskId = d.task_id;
+        setSummary(currentTaskId, d.status, '');
+        beginPolling();
+    } catch(e) {
+        if (e.name==='TypeError') alert('无法连接后端，请确认后端已启动');
+        else alert(e.message);
+    }
+}
+
+async function refresh() {
+    if (!currentTaskId) { alert('请先开始调查'); return; }
+    try {
+        const sr = await fetch(`${API_BASE}/api/investigation/${currentTaskId}/status`, { headers:headers() });
+        if (!sr.ok) throw new Error(await sr.text());
+        const sd = await sr.json();
+        setSummary(sd.task_id, sd.status, sd.current_module);
+        renderProgress(sd.module_progress||[]);
+        const rr = await fetch(`${API_BASE}/api/investigation/${currentTaskId}/result`, { headers:headers() });
+        if (!rr.ok) throw new Error(await rr.text());
+        const rd = await rr.json();
+        renderResults(rd);
+        document.getElementById('reportBox').textContent = rd.final_report||'尚未生成报告';
+        if (sd.status==='completed'||sd.status==='failed') stopPolling();
+    } catch(e) {
+        if (e.name==='TypeError') { alert('无法连接后端'); stopPolling(); }
+        else alert(e.message);
+    }
+}
+
+function beginPolling() { stopPolling(); pollingTimer = setInterval(refresh, 1500); refresh().catch(e=>alert(e.message)); }
+function stopPolling() { if (pollingTimer) { clearInterval(pollingTimer); pollingTimer=null; } }
+
+document.getElementById('startBtn').onclick = start;
+document.getElementById('refreshBtn').onclick = refresh;
+document.getElementById('downloadBtn').onclick = () => { if (!currentTaskId) { alert('请先开始调查'); return; } window.open(`${API_BASE}/api/investigation/${currentTaskId}/report.md`); };
+
+// Listen for LM Studio events from parent (Tauri iframe)
+window.addEventListener('message', (e) => {
+    if (e.data?.type==='lm-studio-status') {
+        const {online, models} = e.data.data;
+        const dot = document.getElementById('lmDot');
+        const text = document.getElementById('lmText');
+        dot.className = 'lm-dot ' + (online?'online':'offline');
+        text.textContent = online ? `LM Studio 在线：${models[0]||'已连接'}` : 'LM Studio 未检测到';
+    }
+});
+
+// Init LM status
+renderProgress([]);
+renderResults({basic_info:{},restriction_info:{},related_companies:[],litigation_cases:[],case_deep_dive:[],bidding_records:[],errors:[]});
+</script>
+</body>
+</html>

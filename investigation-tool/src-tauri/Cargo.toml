@@ -1,0 +1,29 @@
+[package]
+name = "execution-survey-tool"
+version = "0.1.0"
+description = "执行背景调查工具"
+authors = ["leo123-tto"]
+edition = "2021"
+
+[lib]
+name = "execution_survey_tool_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["devtools"] }
+tauri-plugin-shell = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.12", features = ["json"] }
+log = "0.4"
+env_logger = "0.11"
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
+panic = "abort"
